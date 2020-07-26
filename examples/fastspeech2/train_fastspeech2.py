@@ -250,6 +250,13 @@ def main():
         nargs="?",
         help='Path of checkpoint model to use as pretrained',
     )
+    parser.add_argument(
+        "--nspeakers",
+        default=0,
+        type=int,
+        nargs="?",
+        help='Number of speakers to override config with',
+    )
     args = parser.parse_args()
 
     # return strategy
@@ -298,6 +305,10 @@ def main():
         config = yaml.load(f, Loader=yaml.Loader)
     config.update(vars(args))
     config["version"] = tensorflow_tts.__version__
+    
+    if args.nspeakers > 0:
+        config["fastspeech_params"]["n_speakers"] = args.nspeakers
+    
     with open(os.path.join(args.outdir, "config.yml"), "w") as f:
         yaml.dump(config, f, Dumper=yaml.Dumper)
     for key, value in config.items():
@@ -315,6 +326,7 @@ def main():
         duration_query = "*-durations.npy"
         f0_query = "*-raw-f0.npy"
         energy_query = "*-raw-energy.npy"
+        speakid_query = "*-speakers.npy"
     else:
         raise ValueError("Only npy are supported.")
 
@@ -329,6 +341,7 @@ def main():
         f0_stat=args.f0_stat,
         energy_stat=args.energy_stat,
         mel_length_threshold=mel_length_threshold,
+        spkid_query=speakid_query,
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
@@ -345,6 +358,7 @@ def main():
         f0_stat=args.f0_stat,
         energy_stat=args.energy_stat,
         mel_length_threshold=mel_length_threshold,
+        spkid_query=speakid_query,
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
