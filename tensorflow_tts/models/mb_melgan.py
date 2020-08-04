@@ -177,6 +177,7 @@ class TFMBMelGANGenerator(TFMelGANGenerator):
     )
     def inference(self, mels):
         mb_audios = self.melgan(mels)
+        mb_audios = self.pqmf.synthesis(mb_audios)
         return self.pqmf.synthesis(mb_audios)
 
     @tf.function(
@@ -184,4 +185,5 @@ class TFMBMelGANGenerator(TFMelGANGenerator):
     )
     def inference_tflite(self, mels):
         mb_audios = self.melgan(mels)
+        mb_audios = self.pqmf.synthesis(mb_audios)
         return self.pqmf.synthesis(mb_audios)
