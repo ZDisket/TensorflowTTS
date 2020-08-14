@@ -35,8 +35,10 @@ After aligning, run the post-MFA script. This will process the MFA outputs into 
 Again, this can take many arguments but all the defaults are good, you only need to specify the path of the config you're going to use (and the `--sample-rate` if it's something other than than 22050).
 This is because the it needs the `hop_size` to calculate durations correctly. The `round y` is to enable rounding, which gives greater accuracy.
 
+You should also use `--trim y` to enable forced alignment-based trimming. This is called Mode 2, which will trim ending and start silences according to forced alignment output and overwrite your wavs. It's more precise and less problem-prone than librosa trimming. **Disable librosa based trimming in your preprocessing config if you use this option!!!!**
+
 ```
-python examples/fastspeech2/mfa/postmfa.py --round y --yaml-path examples/fastspeech2/conf/fastspeech2.v1.yaml
+python examples/fastspeech2/mfa/postmfa.py --trim y --round y --yaml-path examples/fastspeech2/conf/fastspeech2.v1.yaml
 ```
 This will output the durations into a folder named `durations`
 
