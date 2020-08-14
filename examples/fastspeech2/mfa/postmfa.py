@@ -127,7 +127,7 @@ def main():
             continue
         else:
           enc_notsil = True
-          trim_low_bound = mark.duration()
+          trim_low_bound = interval.duration()
           
         dur = interval.duration()*(sarate/hopsz)
         if doround:
@@ -147,7 +147,7 @@ def main():
       trim_high_bound = totdursecs
       
       if dotrim:
-        sf.write(full_wav_path,sdata[secs_to_samples(trim_low_bound,srate):secs_to_samples(trim_high_bound,srate)],"PCM_16")
+        sf.write(full_wav_path,sdata[secs_to_samples(trim_low_bound,srate):secs_to_samples(trim_high_bound,srate)],srate,"PCM_16")
         
     
 
