@@ -126,8 +126,10 @@ def main():
           if dotrim and not enc_notsil:
             continue
         else:
+          if not enc_notsil:
+            trim_low_bound = interval.duration()
+
           enc_notsil = True
-          trim_low_bound = interval.duration()
           
         dur = interval.duration()*(sarate/hopsz)
         if doround:

@@ -74,7 +74,6 @@ def main():
                   break
               if not found:
                 trueid = idf.replace("norm-feats.npy","")
-                print("Not found for " + trueid + " adding to list")
                 afterdel.append(trueid)
 
 
@@ -87,9 +86,8 @@ def main():
     
     for trueid in afterdel:
       searchterm = trueid + "*"
-      print(searchterm)
+      print("Deleting " + trueid)
       for path in Path(args.dump_dir).rglob(searchterm):
-        print("Deleting: " + path.name)
         os.remove(path.as_posix())
      
      
