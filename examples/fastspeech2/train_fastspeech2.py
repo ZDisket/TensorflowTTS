@@ -352,7 +352,7 @@ def main():
     )
 
 
-    fastspeech = TFFastSpeech2(config=FastSpeech2Config(**config["fastspeech_params"]))
+    fastspeech = TFFastSpeech2(config=FastSpeech2Config(**config["fastspeech2_params"]))
     fastspeech._build()
     fastspeech.summary()
 

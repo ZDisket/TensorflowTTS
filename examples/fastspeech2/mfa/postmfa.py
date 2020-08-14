@@ -4,11 +4,16 @@ import os
 import numpy as np
 from tqdm import tqdm
 import argparse
+import soundfile as sf
 
 def safemkdir(dirn):
   if not os.path.isdir(dirn):
     os.mkdir(dirn)
-    
+
+
+def secs_to_samples(insecs,insr):
+    return round(insecs * insr)
+
 def main():
     parser = argparse.ArgumentParser(description="Read durations from MFA and assign")
     parser.add_argument(
@@ -25,31 +30,31 @@ def main():
     )
     parser.add_argument(
        "--textgrid-path",
-       default="TextGrids",
+        default="TextGrids",
         type=str,
         help="Directory where the TextGrid output from MFA is stored",
     )
     parser.add_argument(
        "--duration-path",
-       default="durations",
+        default="durations",
         type=str,
         help="Directory where the duration output will be stored",
     )
     parser.add_argument(
        "--sample-rate",
-       default=22050,
+        default=22050,
         type=int,
         help="Sample rate of source audio",
     )
     parser.add_argument(
-       "--trimlistname",
-       default="trimlist",
+       "--trim",
+        default="n",
         type=str,
-        help="Name of trimlist output",
+        help="Whether to apply MFA-based trimming to source audio. This enables mode 2",
     )
     parser.add_argument(
        "--round",
-       default="y",
+        default="y",
         type=str,
         help="Whether to round durations",
     )
@@ -66,6 +71,11 @@ def main():
       print("Not rounding")
       doround = False
     
+    dotrim = False
+    if args.trim == "y":
+      dotrim = True
+      print("Switching to Mode 2")
+
     tgrids = os.listdir(txgridpath)
 
     with open(yapath) as file:
@@ -77,9 +87,7 @@ def main():
     sil_phones = ['sil', 'sp', 'spn', '']
     metafile = open(inmetadpath,"w")
     print("Reading TextGrids...")
-
-    trimidlist = []
-    trimdurlist = []
+    
     for tgp in tqdm(tgrids):
       if not os.path.isfile(txgridpath + "/" + tgp):
         print("Could not find " + tgp)
@@ -100,10 +108,27 @@ def main():
       durations = []
       totdursecs = 0.0
       phs = "{"
+      full_wav_path = wavspath + "/" + tgp.replace(".TextGrid",".wav")
+      if dotrim:
+        sdata, srate = sf.read(full_wav_path)
+        
+      enc_notsil = False
+      
+      trim_low_bound = 0.0
+      trim_high_bound = 0.0
+
+          
       for interval in pha.intervals:
         mark = interval.mark
+        # If we are in Mode 2, we skip start silent phonemes
         if mark in sil_phones:
           mark = "SIL"
+          if dotrim and not enc_notsil:
+            continue
+        else:
+          enc_notsil = True
+          trim_low_bound = mark.duration()
+          
         dur = interval.duration()*(sarate/hopsz)
         if doround:
           durations.append(round(dur))
@@ -113,12 +138,18 @@ def main():
         
         phs += mark + " "
         totdursecs += interval.duration()
+        
+
       phs += "END"
       durations.append(0)
       phs += "}"
       phs = phs.replace(" }","}")
-      trimidlist.append(tgp.replace(".TextGrid",""))
-      trimdurlist.append(totdursecs)
+      trim_high_bound = totdursecs
+      
+      if dotrim:
+        sf.write(full_wav_path,sdata[secs_to_samples(trim_low_bound,srate):secs_to_samples(trim_high_bound,srate)],"PCM_16")
+        
+    
 
       
       
@@ -128,7 +159,6 @@ def main():
 
 
     metafile.close()
-    np.save(args.trimlistname,np.array([np.array(trimidlist),np.array(trimdurlist)]))
   
   
 
