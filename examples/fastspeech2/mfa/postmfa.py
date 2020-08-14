@@ -117,9 +117,20 @@ def main():
       trim_low_bound = 0.0
       trim_high_bound = 0.0
 
-          
-      for interval in pha.intervals:
+      max_interval = len(pha.intervals) + 1
+      # To trim ending silence, we find where the ending SIL chain ends
+      if dotrim:
+        for rindex, rint in reversed(list(enumerate(pha.intervals))):
+          if rint.mark not in sil_phones:
+            max_interval = rindex
+            break
+      
+      
+      for index, interval in enumerate(pha.intervals):
         mark = interval.mark
+        if index > max_interval:
+          break
+          
         # If we are in Mode 2, we skip start silent phonemes
         if mark in sil_phones:
           mark = "SIL"
