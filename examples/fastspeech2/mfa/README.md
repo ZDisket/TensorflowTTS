@@ -42,8 +42,7 @@ python examples/fastspeech2/mfa/postmfa.py --trim y --round y --yaml-path exampl
 ```
 This will output the durations into a folder named `durations`
 
-**Now run the usual preprocessing steps outlined in the main README, except that:**
-In `tensorflow-tts-preprocess`, add `--trimlist trimlist.npy` as an argument. This is the trimming list output from postmfa.py
+**Now run the usual preprocessing steps outlined in the main README**; again, **Disable librosa based trimming in your preprocessing config if you used forced alignemnt based trimming!**
 
 ## After regular preprocessing
 
