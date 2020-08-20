@@ -35,3 +35,10 @@ ljspeech
 LibriTTS/
 dataset/
 mfa/
+kss/
+baker/
+libritts/
+dump_baker/
+dump_ljspeech/
+dump_kss/
+dump_libritts/
