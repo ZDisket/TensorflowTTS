@@ -209,7 +209,7 @@ class LJSpeechProcessor(BaseProcessor):
 
     def processtxtph(self,intxt):
       g2p = G2p()
-      ptext =  _clean_text(intxt,[self.cleaner_names])
+      ptext =  self._clean_text(intxt,[self.cleaner_names])
       phs = _g2p2synth(g2p(ptext))
 
       arpatxt = " ".join(phs)
