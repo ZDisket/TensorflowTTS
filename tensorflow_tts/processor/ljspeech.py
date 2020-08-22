@@ -213,8 +213,8 @@ class LJSpeechProcessor(BaseProcessor):
       phs = _g2p2synth(g2p(ptext))
 
       arpatxt = " ".join(phs)
-      ids = _arpabet_to_sequence(arpatxt)
-
+      ids = self._arpabet_to_sequence(arpatxt)
+      
       return ids, arpatxt
 
     def setup_eos_token(self):
