@@ -139,6 +139,9 @@ class LJSpeechProcessor(object):
         wav_path = os.path.join(data_dir, "wavs", f"{wav_file}.wav")
         return text_norm, wav_path, self.speaker_name
 
+    def setup_eos_token(self):
+        return _eos
+
     def get_one_sample(self, item):
         text, wav_file, speaker_name = item
 
