@@ -196,7 +196,6 @@ class LJSpeechProcessor(BaseProcessor):
             text = m.group(3)
 
         # add eos tokens
-        sequence += [self.eos_id]
         return sequence
 
     def _clean_text(self, text, cleaner_names):
@@ -218,7 +217,7 @@ class LJSpeechProcessor(BaseProcessor):
       return ids, arpatxt
 
     def setup_eos_token(self):
-        return _eos # because we do use this 
+        return None # because we don't use this 
 
     def _symbols_to_sequence(self, symbols):
         return [self.symbol_to_id[s] for s in symbols if self._should_keep_symbol(s)]
