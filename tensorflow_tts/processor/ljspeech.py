@@ -131,6 +131,9 @@ LJSPEECH_SYMBOLS = (
 # Regular expression matching text enclosed in curly braces:
 _curly_re = re.compile(r"(.*?)\{(.+?)\}(.*)")
 
+_symbol_to_id = {s: i for i, s in enumerate(LJSPEECH_SYMBOLS)}
+_id_to_symbol = {i: s for i, s in enumerate(LJSPEECH_SYMBOLS)}
+
 
 @dataclass
 class LJSpeechProcessor(BaseProcessor):
@@ -221,13 +224,13 @@ class LJSpeechProcessor(BaseProcessor):
         return None # because we don't use this 
 
     def _symbols_to_sequence(self, symbols):
-        return [self.symbol_to_id[s] for s in symbols if self._should_keep_symbol(s)]
+        return [_symbol_to_id[s] for s in symbols if self._should_keep_symbol(s)]
 
     def _arpabet_to_sequence(self, text):
         return self._symbols_to_sequence(["@" + s for s in text.split()])
 
     def _should_keep_symbol(self, s):
-        return s in self.symbol_to_id and s != "_" and s != "~"
+        return s in _symbol_to_id and s != "_" and s != "~"
 
 def _g2p2synth(inseq):
   phseq = list()
