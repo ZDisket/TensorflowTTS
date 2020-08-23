@@ -307,7 +307,7 @@ def main():
     config["version"] = tensorflow_tts.__version__
     
     if args.nspeakers > 0:
-        config["fastspeech_params"]["n_speakers"] = args.nspeakers
+        config["fastspeech2_params"]["n_speakers"] = args.nspeakers
     
     with open(os.path.join(args.outdir, "config.yml"), "w") as f:
         yaml.dump(config, f, Dumper=yaml.Dumper)
@@ -372,7 +372,7 @@ def main():
 
     if len(args.pretrained) > 1:
       print("Loading pretrained parameters...")
-      fastspeech.load_weights(args.pretrained)
+      fastspeech.load_weights(args.pretrained,by_name=True,skip_mismatch=True)
 
 
 
