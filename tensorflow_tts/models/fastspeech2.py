@@ -128,11 +128,11 @@ class TFFastSpeech2(TFFastSpeech):
             [[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]], tf.float32
         )
         self(
-            input_ids=input_ids, 
-            speaker_ids=speaker_ids, 
-            duration_gts=duration_gts, 
-            f0_gts=f0_gts, 
-            energy_gts=energy_gts
+            input_ids=input_ids,
+            speaker_ids=speaker_ids,
+            duration_gts=duration_gts,
+            f0_gts=f0_gts,
+            energy_gts=energy_gts,
         )
 
     def call(
@@ -212,13 +212,7 @@ class TFFastSpeech2(TFFastSpeech):
         return outputs
 
     def _inference(
-        self,
-        input_ids,
-        speaker_ids,
-        speed_ratios,
-        f0_ratios,
-        energy_ratios,
-        **kwargs,
+        self, input_ids, speaker_ids, speed_ratios, f0_ratios, energy_ratios, **kwargs,
     ):
         """Call logic."""
         attention_mask = tf.math.not_equal(input_ids, 0)
@@ -293,11 +287,11 @@ class TFFastSpeech2(TFFastSpeech):
             self._inference,
             experimental_relax_shapes=True,
             input_signature=[
-                tf.TensorSpec(shape=[None, None], dtype=tf.int32),
-                tf.TensorSpec(shape=[None,], dtype=tf.int32),
-                tf.TensorSpec(shape=[None,], dtype=tf.float32),
-                tf.TensorSpec(shape=[None,], dtype=tf.float32),
-                tf.TensorSpec(shape=[None,], dtype=tf.float32),
+                tf.TensorSpec(shape=[None, None], dtype=tf.int32, name="input_ids"),
+                tf.TensorSpec(shape=[None,], dtype=tf.int32, name="speaker_ids"),
+                tf.TensorSpec(shape=[None,], dtype=tf.float32, name="speed_ratios"),
+                tf.TensorSpec(shape=[None,], dtype=tf.float32, name="f0_ratios"),
+                tf.TensorSpec(shape=[None,], dtype=tf.float32, name="energy_ratios"),
             ],
         )
 
@@ -305,10 +299,10 @@ class TFFastSpeech2(TFFastSpeech):
             self._inference,
             experimental_relax_shapes=True,
             input_signature=[
-                tf.TensorSpec(shape=[1, None], dtype=tf.int32),
-                tf.TensorSpec(shape=[1,], dtype=tf.int32),
-                tf.TensorSpec(shape=[1,], dtype=tf.float32),
-                tf.TensorSpec(shape=[1,], dtype=tf.float32),
-                tf.TensorSpec(shape=[1,], dtype=tf.float32),
+                tf.TensorSpec(shape=[1, None], dtype=tf.int32, name="input_ids"),
+                tf.TensorSpec(shape=[1,], dtype=tf.int32, name="speaker_ids"),
+                tf.TensorSpec(shape=[1,], dtype=tf.float32, name="speed_ratios"),
+                tf.TensorSpec(shape=[1,], dtype=tf.float32, name="f0_ratios"),
+                tf.TensorSpec(shape=[1,], dtype=tf.float32, name="energy_ratios"),
             ],
         )

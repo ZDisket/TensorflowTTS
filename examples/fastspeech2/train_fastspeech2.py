@@ -366,7 +366,7 @@ def main():
     )
 
 
-    fastspeech = TFFastSpeech2(config=FastSpeech2Config(**config["fastspeech_params"]))
+    fastspeech = TFFastSpeech2(config=FastSpeech2Config(**config["fastspeech2_params"]))
     fastspeech._build()
     fastspeech.summary()
 
@@ -388,7 +388,7 @@ def main():
     with STRATEGY.scope():
         # define model
         fastspeech = TFFastSpeech2(
-            config=FastSpeech2Config(**config["fastspeech_params"])
+            config=FastSpeech2Config(**config["fastspeech2_params"])
         )
         fastspeech._build()
         fastspeech.summary()

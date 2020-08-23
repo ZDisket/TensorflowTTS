@@ -1,11 +1,11 @@
 <h2 align="center">
 <p> :yum: TensorflowTTS
 <p align="center">
-    <a href="https://github.com/dathudeptrai/TensorflowTTS/actions">
-        <img alt="Build" src="https://github.com/dathudeptrai/TensorflowTTS/workflows/CI/badge.svg?branch=master">
+    <a href="https://github.com/tensorspeech/TensorFlowTTS/actions">
+        <img alt="Build" src="https://github.com/tensorspeech/TensorFlowTTS/workflows/CI/badge.svg?branch=master">
     </a>
-    <a href="https://github.com/dathudeptrai/TensorflowTTS/blob/master/LICENSE">
-        <img alt="GitHub" src="https://img.shields.io/github/license/dathudeptrai/TensorflowTTS?color=red">
+    <a href="https://github.com/tensorspeech/TensorFlowTTS/blob/master/LICENSE">
+        <img alt="GitHub" src="https://img.shields.io/github/license/tensorspeech/TensorflowTTS?color=red">
     </a>
     <a href="https://colab.research.google.com/drive/1akxtrLZHKuMiQup00tzO2olCaN-y3KiD?usp=sharing">
         <img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
@@ -16,13 +16,16 @@
 <p>Real-Time State-of-the-art Speech Synthesis for Tensorflow 2
 </h2>
 
-:zany_face: TensorflowTTS provides real-time state-of-the-art speech synthesis architectures such as Tacotron-2, Melgan, Multiband-Melgan, FastSpeech, FastSpeech2 based-on TensorFlow 2. With Tensorflow 2, we can speed-up training/inference progress, optimizer further by using [fake-quantize aware](https://www.tensorflow.org/model_optimization/guide/quantization/training_comprehensive_guide) and [pruning](https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras), make TTS models can be run faster than real-time and be able to deploy on mobile devices or embedded systems. 
+:zany_face: TensorflowTTS provides real-time state-of-the-art speech synthesis architectures such as Tacotron-2, Melgan, Multiband-Melgan, FastSpeech, FastSpeech2 based-on TensorFlow 2. With Tensorflow 2, we can speed-up training/inference progress, optimizer further by using [fake-quantize aware](https://www.tensorflow.org/model_optimization/guide/quantization/training_comprehensive_guide) and [pruning](https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras), make TTS models can be run faster than real-time and be able to deploy on mobile devices or embedded systems.
 
 ## What's new
-- 2020/07/17 **(NEW!)** Support MultiGPU for all Trainer.
-- 2020/07/05 **(New!)** Support Convert Tacotron-2, FastSpeech to Tflite. Pls see the [colab](https://colab.research.google.com/drive/1HudLLpT9CQdh2k04c06bHUwLubhGTWxA?usp=sharing). Thank @jaeyoo from TFlite team for his support.
+- 2020/08/18 **(NEW!)** Update [new base processor](https://github.com/TensorSpeech/TensorFlowTTS/blob/master/tensorflow_tts/processor/base_processor.py). Add [AutoProcessor](https://github.com/TensorSpeech/TensorFlowTTS/blob/master/tensorflow_tts/inference/auto_processor.py) and [pretrained processor](https://github.com/TensorSpeech/TensorFlowTTS/blob/master/tensorflow_tts/processor/pretrained/) json file.
+- 2020/08/14 **(NEW!)** Support Chinese TTS. Pls see the [colab](https://colab.research.google.com/drive/1YpSHRBRPBI7cnTkQn1UcVTWEQVbsUm1S?usp=sharing). Thank [@azraelkuan](https://github.com/azraelkuan).
+- 2020/08/05 **(NEW!)** Support Korean TTS. Pls see the [colab](https://colab.research.google.com/drive/1ybWwOS5tipgPFttNulp77P6DAB5MtiuN?usp=sharing). Thank [@crux153](https://github.com/crux153).
+- 2020/07/17 Support MultiGPU for all Trainer.
+- 2020/07/05 Support Convert Tacotron-2, FastSpeech to Tflite. Pls see the [colab](https://colab.research.google.com/drive/1HudLLpT9CQdh2k04c06bHUwLubhGTWxA?usp=sharing). Thank @jaeyoo from TFlite team for his support.
 - 2020/06/20 [FastSpeech2](https://arxiv.org/abs/2006.04558) implementation with Tensorflow is supported.
-- 2020/06/07 [Multi-band MelGAN (MB MelGAN)](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/multiband_melgan/) implementation with Tensorflow is supported. 
+- 2020/06/07 [Multi-band MelGAN (MB MelGAN)](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/multiband_melgan/) implementation with Tensorflow is supported.
 
 
 ## Features
@@ -34,15 +37,17 @@
 - Mixed precision to speed-up training if posible.
 - Support both Single/Multi GPU in base trainer class.
 - TFlite conversion for all supported model.
+- Android example.
+- Support many languages (currently, we support Chinese, Korean, English.)
 
 ## Requirements
 This repository is tested on Ubuntu 18.04 with:
 
-- Python 3.6+
+- Python 3.7+
 - Cuda 10.1
 - CuDNN 7.6.5
-- Tensorflow 2.2
-- [Tensorflow Addons](https://github.com/tensorflow/addons) 0.10.0
+- Tensorflow 2.2/2.3
+- [Tensorflow Addons](https://github.com/tensorflow/addons) >= 0.10.0
 
 Different Tensorflow version should be working but not tested yet. This repo will try to work with latest stable tensorflow version. **We recommend you install tensorflow 2.3.0 to training in case you want to use MultiGPU.**
 
@@ -51,12 +56,12 @@ Different Tensorflow version should be working but not tested yet. This repo wil
 ```bash
 $ pip install TensorflowTTS
 ```
-### From source 
+### From source
 Examples are included in the repository but are not shipped with the framework. Therefore, in order to run the latest verion of examples, you need install from source following bellow.
 ```bash
-$ git clone https://github.com/TensorSpeech/TensorflowTTS.git
-$ cd TensorflowTTS
-$ pip install  .
+$ git clone https://github.com/TensorSpeech/TensorFlowTTS.git
+$ cd TensorFlowTTS
+$ pip install .
 ```
 If you want upgrade the repository and its dependencies:
 ```bash
@@ -89,40 +94,47 @@ Here in an audio samples on valid set. [tacotron-2](https://drive.google.com/ope
 
 Prepare a dataset in the following format:
 ```
-|- datasets/
+|- [NAME_DATASET]/
 |   |- metadata.csv
 |   |- wav/
 |       |- file1.wav
 |       |- ...
 ```
 
-where metadata.csv has the following format: id|transcription. This is a ljspeech-like format, you can ignore preprocessing step if you have other format dataset.
+where `metadata.csv` has the following format: `id|transcription`. This is a ljspeech-like format, you can ignore preprocessing steps if you have other format dataset.
+
+Note that `NAME_DATASET` should be `[ljspeech/kss/baker/libritts]` for example.
 
 ## Preprocessing
 
-The preprocessing have three steps:
+The preprocessing has two steps:
 
-1. Convert charactor to ids, calculate pre-normalize melspectrogram, normalize audio to [-1, 1], split dataset into train and valid part.
-2. Computer mean/var of melspectrogram over **training** part.
-3. Normalize melspectrogram based-on mean/var of training dataset.
+1. Preprocess audio features
+    - Convert characters to IDs
+    - Compute mel spectrograms
+    - Normalize mel spectrograms to [-1, 1] range
+    - Split dataset into train and validation
+    - Compute mean and standard deviation of multiple features from the **training** split
+2. Standardize mel spectrogram based on computed statistics
 
-This is a command line to do three steps above:
-
+To reproduce the steps above:
 ```
-tensorflow-tts-preprocess --rootdir ./datasets/ --outdir ./dump/ --conf preprocess/ljspeech_preprocess.yaml
-tensorflow-tts-compute-statistics --rootdir ./dump/train/ --outdir ./dump --config preprocess/ljspeech_preprocess.yaml
-tensorflow-tts-normalize --rootdir ./dump --outdir ./dump --stats ./dump/stats.npy --config preprocess/ljspeech_preprocess.yaml
-
+tensorflow-tts-preprocess --rootdir ./[ljspeech/kss/baker/libritts] --outdir ./dump_[ljspeech/kss/baker/libritts] --config preprocess/[ljspeech/kss/baker]_preprocess.yaml --dataset [ljspeech/kss/baker/libritts]
+tensorflow-tts-normalize --rootdir ./dump_[ljspeech/kss/baker/libritts] --outdir ./dump_[ljspeech/kss/baker/libritts] --config preprocess/[ljspeech/kss/baker/libritts]_preprocess.yaml --dataset [ljspeech/kss/baker/libritts]
 ```
 
-After preprocessing, a structure of project will become:
+Right now we only support [`ljspeech`](https://keithito.com/LJ-Speech-Dataset/), [`kss`](https://www.kaggle.com/bryanpark/korean-single-speaker-speech-dataset), [`baker`](https://weixinxcxdb.oss-cn-beijing.aliyuncs.com/gwYinPinKu/BZNSYP.rar) and [`libritts`](http://www.openslr.org/60/) for dataset argument. In the future, we intend to support more datasets.
+
+**Note**: To runing `libritts` preprocessing, please first read the instruction in [examples/fastspeech2_libritts](https://github.com/TensorSpeech/TensorFlowTTS/tree/master/examples/fastspeech2_libritts). We need reformat it first before run preprocessing.
+
+After preprocessing, the structure of the project folder should be:
 ```
-|- datasets/
+|- [NAME_DATASET]/
 |   |- metadata.csv
 |   |- wav/
 |       |- file1.wav
 |       |- ...
-|- dump/
+|- dump_[ljspeech/kss/baker/libritts]/
 |   |- train/
 |       |- ids/
 |           |- LJ001-0001-ids.npy
@@ -161,9 +173,9 @@ After preprocessing, a structure of project will become:
 |       |- wavs/
 |           |- LJ001-0009-wave.npy
 |           |- ...
-|   |- stats.npy/ 
-|   |- stats_f0.npy/ 
-|   |- stats_energy.npy/ 
+|   |- stats.npy
+|   |- stats_f0.npy
+|   |- stats_energy.npy
 |   |- train_utt_ids.npy
 |   |- valid_utt_ids.npy
 |- examples/
@@ -173,10 +185,17 @@ After preprocessing, a structure of project will become:
 |   ...
 ```
 
-Where stats.npy contains mean/var of train melspectrogram (we can use mean/var to de-normalization to get melspectrogram raw), stats_energy.npy is a min/max value of energy values over **Training** dataset, stats_f0 is a min/max value of F0 values, train_utt_ids/valid_utt_ids contains training and valid utt ids respectively. We use suffix (ids, raw-feats, norm-feats, wave) for each type of input.
+- `stats.npy` contains the mean and std from the training split mel spectrograms
+- `stats_energy.npy` contains the mean and std of energy values from the training split
+- `stats_f0.npy` contains the mean and std of F0 values in the training split
+- `train_utt_ids.npy` / `valid_utt_ids.npy` contains training and validation utterances IDs respectively
+
+We use suffix (`ids`, `raw-feats`, `raw-energy`, `raw-f0`, `norm-feats` and `wave`) for each type of input.
+
 
 **IMPORTANT NOTES**:
-- This preprocessing step based-on [ESP-NET](https://github.com/espnet/espnet) so you can combine all models here with other models from espnet repo.
+- This preprocessing step is based on [ESPnet](https://github.com/espnet/espnet) so you can combine all models here with other models from ESPnet repository.
+- Regardless how your dataset is formatted, the final structure of `dump` folder **SHOULD** follow above structure to be able use the training script or you can modify by yourself 😄.
 
 ## Training models
 
@@ -185,6 +204,7 @@ To know how to training model from scratch or fine-tune with other datasets/lang
 - For Tacotron-2 tutorial, pls see [example/tacotron2](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/tacotron2)
 - For FastSpeech tutorial, pls see [example/fastspeech](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/fastspeech)
 - For FastSpeech2 tutorial, pls see [example/fastspeech2](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/fastspeech2)
+- For FastSpeech2 + MFA tutorial, pls see [example/fastspeech2_libritts](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/fastspeech2_libritts)
 - For MelGAN tutorial, pls see [example/melgan](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/melgan)
 - For MelGAN + STFT Loss tutorial, pls see [example/melgan.stft](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/melgan.stft)
 - For Multiband-MelGAN tutorial, pls see [example/multiband_melgan](https://github.com/dathudeptrai/TensorflowTTS/tree/master/examples/multiband_melgan)
@@ -216,10 +236,10 @@ A detail implementation of base_trainer from [tensorflow_tts/trainer/base_traine
 - **generate_and_save_intermediate_result**: This function will save intermediate result such as: plot alignment, save audio generated, plot mel-spectrogram ...
 - **compute_per_example_losses**: This function will compute per_example_loss for model, note that all element of the loss **MUST** has shape [batch_size].
 
-All models on this repo are trained based-on **GanBasedTrainer** (see [train_melgan.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/melgan/train_melgan.py), [train_melgan_stft.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/melgan.stft/train_melgan_stft.py), [train_multiband_melgan.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/multiband_melgan/train_multiband_melgan.py)) and **Seq2SeqBasedTrainer** (see [train_tacotron2.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/tacotron2/train_tacotron2.py), [train_fastspeech.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/fastspeech/train_fastspeech.py)). 
+All models on this repo are trained based-on **GanBasedTrainer** (see [train_melgan.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/melgan/train_melgan.py), [train_melgan_stft.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/melgan.stft/train_melgan_stft.py), [train_multiband_melgan.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/multiband_melgan/train_multiband_melgan.py)) and **Seq2SeqBasedTrainer** (see [train_tacotron2.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/tacotron2/train_tacotron2.py), [train_fastspeech.py](https://github.com/dathudeptrai/TensorflowTTS/blob/master/examples/fastspeech/train_fastspeech.py)).
 
 # End-to-End Examples
-You can know how to inference each model at [notebooks](https://github.com/dathudeptrai/TensorflowTTS/tree/master/notebooks) or see a [colab](https://colab.research.google.com/drive/1akxtrLZHKuMiQup00tzO2olCaN-y3KiD?usp=sharing). Here is an example code for end2end inference with fastspeech and melgan.
+You can know how to inference each model at [notebooks](https://github.com/dathudeptrai/TensorflowTTS/tree/master/notebooks) or see a [colab](https://colab.research.google.com/drive/1akxtrLZHKuMiQup00tzO2olCaN-y3KiD?usp=sharing) (for English), [colab](https://colab.research.google.com/drive/1ybWwOS5tipgPFttNulp77P6DAB5MtiuN?usp=sharing) (for Korean). Here is an example code for end2end inference with fastspeech and melgan.
 
 ```python
 import numpy as np
@@ -228,33 +248,28 @@ import yaml
 
 import tensorflow as tf
 
-from tensorflow_tts.processor import LJSpeechProcessor
-
-from tensorflow_tts.configs import FastSpeechConfig
-from tensorflow_tts.configs import MelGANGeneratorConfig
-
-from tensorflow_tts.models import TFFastSpeech
-from tensorflow_tts.models import TFMelGANGenerator
+from tensorflow_tts.inference import AutoConfig
+from tensorflow_tts.inference import TFAutoModel
+from tensorflow_tts.inference import AutoProcessor
 
 # initialize fastspeech model.
-with open('./examples/fastspeech/conf/fastspeech.v1.yaml') as f:
-    fs_config = yaml.load(f, Loader=yaml.Loader)
-fs_config = FastSpeechConfig(**fs_config["fastspeech_params"])
-fastspeech = TFFastSpeech(config=fs_config, name="fastspeech")
-fastspeech._build()
-fastspeech.load_weights("./examples/fastspeech/pretrained/model-195000.h5")
+fs_config = AutoConfig.from_pretrained('/examples/fastspeech/conf/fastspeech.v1.yaml')
+fastspeech = TFAutoModel.from_pretrained(
+    config=fs_config,
+    pretrained_path="./examples/fastspeech/pretrained/model-195000.h5"
+)
+
 
 # initialize melgan model
-with open('./examples/melgan/conf/melgan.v1.yaml') as f:
-    melgan_config = yaml.load(f, Loader=yaml.Loader)
-melgan_config = MelGANGeneratorConfig(**melgan_config["generator_params"])
-melgan = TFMelGANGenerator(config=melgan_config, name='melgan_generator')
-melgan._build()
-melgan.load_weights("./examples/melgan/pretrained/generator-1500000.h5")
+melgan_config = AutoConfig.from_pretrained('./examples/melgan/conf/melgan.v1.yaml')
+melgan = TFAutoModel.from_pretrained(
+    config=melgan_config,
+    pretrained_path="./examples/melgan/checkpoint/generator-1500000.h5"
+)
 
 
 # inference
-processor = LJSpeechProcessor(None, cleaner_names="english_cleaners")
+processor = AutoProcessor.from_pretrained(pretrained_path="./test/files/ljspeech_mapper.json")
 
 ids = processor.text_to_sequence("Recent research at Harvard has shown meditating for as little as 8 weeks, can actually increase the grey matter in the parts of the brain responsible for emotional regulation, and learning.")
 ids = tf.expand_dims(ids, 0)
@@ -267,8 +282,8 @@ masked_mel_before, masked_mel_after, duration_outputs = fastspeech.inference(
 )
 
 # melgan inference
-audio_before = melgan(masked_mel_before)[0, :, 0]
-audio_after = melgan(masked_mel_after)[0, :, 0]
+audio_before = melgan.inference(masked_mel_before)[0, :, 0]
+audio_after = melgan.inference(masked_mel_after)[0, :, 0]
 
 # save to file
 sf.write('./audio_before.wav', audio_before, 22050, "PCM_16")
@@ -276,10 +291,10 @@ sf.write('./audio_after.wav', audio_after, 22050, "PCM_16")
 ```
 
 # Contact
-[Minh Nguyen Quan Anh](https://github.com/dathudeptrai): nguyenquananhminh@gmail.com, [erogol](https://github.com/erogol): erengolge@gmail.com, [Kuan Chen](https://github.com/azraelkuan): azraelkuan@gmail.com, [Takuya Ebata](https://github.com/MokkeMeguru): meguru.mokke@gmail.com, [Trinh Le Quang](https://github.com/l4zyf9x): trinhle.cse@gmail.com
+[Minh Nguyen Quan Anh](https://github.com/dathudeptrai): nguyenquananhminh@gmail.com, [erogol](https://github.com/erogol): erengolge@gmail.com, [Kuan Chen](https://github.com/azraelkuan): azraelkuan@gmail.com, [Dawid Kobus](https://github.com/machineko): machineko@protonmail.com, [Takuya Ebata](https://github.com/MokkeMeguru): meguru.mokke@gmail.com, [Trinh Le Quang](https://github.com/l4zyf9x): trinhle.cse@gmail.com, [Yunchao He](https://github.com/candlewill): yunchaohe@gmail.com, [Alejandro Miguel Velasquez](https://github.com/ZDisket): xml506ok@gmail.com
 
 # License
 Overrall, Almost models here are licensed under the [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) for all countries in the world, except in **Viet Nam** this framework cannot be used for production in any way without permission from TensorflowTTS's Authors. There is an exception, Tacotron-2 can be used with any perpose. So, if you are VietNamese and want to use this framework for production, you **Must** contact our in andvance.
 
 # Acknowledgement
-We would like to thank [Tomoki Hayashi](https://github.com/kan-bayashi), who discussed with our much about Melgan, Multi-band melgan, Fastspeech and Tacotron. This framework based-on his great open-source [ParallelWaveGan](https://github.com/kan-bayashi/ParallelWaveGAN) project. 
+We would like to thank [Tomoki Hayashi](https://github.com/kan-bayashi), who discussed with our much about Melgan, Multi-band melgan, Fastspeech and Tacotron. This framework based-on his great open-source [ParallelWaveGan](https://github.com/kan-bayashi/ParallelWaveGAN) project.
