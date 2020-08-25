@@ -304,6 +304,13 @@ def main():
         type=int,
         help="using mixed precision for generator or not.",
     )
+    parser.add_argument(
+        "--pretrained",
+        default="",
+        type=str,
+        nargs="?",
+        help='Pretrained checkpoint file to load',
+    )
     args = parser.parse_args()
 
     # return strategy
@@ -425,6 +432,9 @@ def main():
         tacotron2 = TFTacotron2(config=tacotron_config, training=True, name="tacotron2")
         tacotron2._build()
         tacotron2.summary()
+        if len(args.pretrained) > 2:
+            print("Loading pretrained parameters...")
+            tacotron2.load_weights(args.pretrained,by_name=True,skip_mismatch=True)
 
         # AdamW for tacotron2
         learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(
