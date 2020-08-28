@@ -54,8 +54,10 @@ class CharactorMelDataset(AbstractDataset):
         root_dir,
         charactor_query="*-ids.npy",
         mel_query="*-norm-feats.npy",
+        speakid_query="*-speakers.npy",
         charactor_load_fn=np.load,
         mel_load_fn=np.load,
+        spkid_load_fn=np.load,
         mel_length_threshold=0,
         reduction_factor=1,
         mel_pad_value=0.0,
@@ -86,13 +88,16 @@ class CharactorMelDataset(AbstractDataset):
         # find all of charactor and mel files.
         charactor_files = sorted(find_files(root_dir, charactor_query))
         mel_files = sorted(find_files(root_dir, mel_query))
+        speakid_files = sorted(find_files(root_dir, speakid_query))
+
         mel_lengths = [mel_load_fn(f).shape[0] for f in mel_files]
         char_lengths = [charactor_load_fn(f).shape[0] for f in charactor_files]
+        speakers = [spkid_load_fn(f)[0] for f in speakid_query]
 
         # assert the number of files
         assert len(mel_files) != 0, f"Not found any mels files in ${root_dir}."
         assert (
-            len(mel_files) == len(charactor_files) == len(mel_lengths)
+            len(mel_files) == len(charactor_files) == len(mel_lengths) == len(speakers)
         ), f"Number of charactor, mel and duration files are different \
                 ({len(mel_files)} vs {len(charactor_files)} vs {len(mel_lengths)})."
 
@@ -116,6 +121,7 @@ class CharactorMelDataset(AbstractDataset):
         self.g = g
         self.use_fixed_shapes = use_fixed_shapes
         self.max_char_length = np.max(char_lengths)
+        self.speakers = speakers
 
         if np.max(mel_lengths) % self.reduction_factor == 0:
             self.max_mel_length = np.max(mel_lengths)
@@ -137,6 +143,7 @@ class CharactorMelDataset(AbstractDataset):
             charactor = self.charactor_load_fn(charactor_file)
             mel_length = self.mel_lengths[i]
             char_length = self.char_lengths[i]
+            speaker = self.speakers[i]
 
             # padding mel to make its length is multiple of reduction factor.
             real_mel_length = mel_length
@@ -163,7 +170,7 @@ class CharactorMelDataset(AbstractDataset):
                 "utt_ids": utt_id,
                 "input_ids": charactor,
                 "input_lengths": char_length,
-                "speaker_ids": 0,
+                "speaker_ids": speaker,
                 "mel_gts": mel,
                 "mel_lengths": mel_length,
                 "real_mel_lengths": real_mel_length,

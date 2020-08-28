@@ -305,11 +305,18 @@ def main():
         help="using mixed precision for generator or not.",
     )
     parser.add_argument(
-        "--pretrained",
-        default="",
-        type=str,
-        nargs="?",
-        help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
+      "--pretrained",
+      default="",
+      type=str,
+      nargs="?",
+      help='Path of checkpoint model to use as pretrained',
+    )
+    parser.add_argument(
+      "--nspeakers",
+      default=0,
+      type=int,
+      nargs="?",
+      help='Number of speakers to override config with',
     )
     args = parser.parse_args()
 
@@ -359,7 +366,9 @@ def main():
         config = yaml.load(f, Loader=yaml.Loader)
     config.update(vars(args))
     config["version"] = tensorflow_tts.__version__
-
+    if args.nspeakers > 0:
+      config["tacotron2_params"]["n_speakers"] = args.nspeakers
+    
     # get dataset
     if config["remove_short_samples"]:
         mel_length_threshold = config["mel_length_threshold"]
@@ -375,7 +384,6 @@ def main():
         raise ValueError("Only npy are supported.")
 
     train_dataset = CharactorMelDataset(
-        dataset=config["tacotron2_params"]["dataset"],
         root_dir=args.train_dir,
         charactor_query=charactor_query,
         mel_query=mel_query,
@@ -402,7 +410,6 @@ def main():
     )
 
     valid_dataset = CharactorMelDataset(
-        dataset=config["tacotron2_params"]["dataset"],
         root_dir=args.dev_dir,
         charactor_query=charactor_query,
         mel_query=mel_query,
@@ -432,12 +439,9 @@ def main():
         tacotron2 = TFTacotron2(config=tacotron_config, training=True, name="tacotron2")
         tacotron2._build()
         tacotron2.summary()
-        
         if len(args.pretrained) > 1:
-            tacotron2.load_weights(args.pretrained, by_name=True, skip_mismatch=True)
-            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
-
-
+          print("Loading pretrained parameters...")
+          tacotron2.load_weights(args.pretrained,by_name=True,skip_mismatch=True)
 
 
         # AdamW for tacotron2
