@@ -92,7 +92,7 @@ class CharactorMelDataset(AbstractDataset):
 
         mel_lengths = [mel_load_fn(f).shape[0] for f in mel_files]
         char_lengths = [charactor_load_fn(f).shape[0] for f in charactor_files]
-        speakers = [spkid_load_fn(f)[0] for f in speakid_query]
+        speakers = [spkid_load_fn(f)[0] for f in speakid_files]
 
         # assert the number of files
         assert len(mel_files) != 0, f"Not found any mels files in ${root_dir}."

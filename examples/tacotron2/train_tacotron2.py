@@ -392,6 +392,7 @@ def main():
         mel_length_threshold=mel_length_threshold,
         reduction_factor=config["tacotron2_params"]["reduction_factor"],
         use_fixed_shapes=config["use_fixed_shapes"],
+        dataset=config["tacotron2_params"]["dataset"],
     )
 
     # update max_mel_length and max_char_length to config
@@ -418,6 +419,7 @@ def main():
         mel_length_threshold=mel_length_threshold,
         reduction_factor=config["tacotron2_params"]["reduction_factor"],
         use_fixed_shapes=False,  # don't need apply fixed shape for evaluation.
+        dataset=config["tacotron2_params"]["dataset"],
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
