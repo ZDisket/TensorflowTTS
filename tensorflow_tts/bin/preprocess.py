@@ -34,11 +34,14 @@ from tensorflow_tts.processor import LJSpeechProcessor
 from tensorflow_tts.processor import BakerProcessor
 from tensorflow_tts.processor import KSSProcessor
 from tensorflow_tts.processor import LibriTTSProcessor
+from tensorflow_tts.processor import SpanishProcessor
 
 from tensorflow_tts.processor.ljspeech import LJSPEECH_SYMBOLS
 from tensorflow_tts.processor.baker import BAKER_SYMBOLS
 from tensorflow_tts.processor.kss import KSS_SYMBOLS
 from tensorflow_tts.processor.libritts import LIBRITTS_SYMBOLS
+from tensorflow_tts.processor.spanish import SPANISH_SYMBOLS
+
 
 from tensorflow_tts.utils import remove_outlier
 
@@ -69,7 +72,7 @@ def parse_and_config():
         "--dataset",
         type=str,
         default="ljspeech",
-        choices=["ljspeech", "kss", "libritts", "baker"],
+        choices=["ljspeech", "kss", "libritts", "baker","spanish"],
         help="Dataset to preprocess.",
     )
     parser.add_argument(
@@ -345,6 +348,7 @@ def preprocess():
         "kss": KSSProcessor,
         "libritts": LibriTTSProcessor,
         "baker": BakerProcessor,
+        "spanish": SpanishProcessor,
     }
 
     dataset_symbol = {
@@ -352,6 +356,7 @@ def preprocess():
         "kss": KSS_SYMBOLS,
         "libritts": LIBRITTS_SYMBOLS,
         "baker": BAKER_SYMBOLS,
+        "spanish": SPANISH_SYMBOLS,
     }
 
     dataset_cleaner = {
@@ -359,6 +364,7 @@ def preprocess():
         "kss": "korean_cleaners",
         "libritts": None,
         "baker": None,
+        "spanish": None,
     }
 
     logging.info(f"Selected '{config['dataset']}' processor.")
