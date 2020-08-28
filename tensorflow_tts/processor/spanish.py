@@ -93,7 +93,6 @@ class SpanishProcessor(BaseProcessor):
     def text_to_sequence(self, text):
         sequence = []
         sequence += self._symbols_to_sequence(text)
-        break
 
         # add eos tokens
         sequence += [self.eos_id]
