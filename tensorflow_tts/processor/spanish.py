@@ -25,16 +25,16 @@ from tensorflow_tts.utils import cleaners
 
 
 _pad = "pad"
-_eos = "eos"
 
-# directly extracted from the CSS20 Spanish metadata
-_letters = "DurantescoviódíqlmbpáCxyfgzhjLúéEABñQPNMTYSJVHGRFIÉOÁüKUZÚwÓÍkWÅè"
+_phonemes = ["b", "a", "D", "i+", "x", "n", "d", "o", "rf", "m", "e", "r", "a+", "j", "t", "s", "k", "e+",
+            "T", "i", "l", "ng", "p", "u", "n~", "o+", "w", "V", "f", "G", "g", "L", "tS", "aU", "u+", "eI",
+            "aI", "oI", "z", "eU"]
 _punctuation = ",.-;¡!¿?': "
-
+_special_phn = ["SIL", "END"]
 
 # Export all symbols:
 SPANISH_SYMBOLS = (
-    [_pad] + list(_punctuation) + list(_letters)  + [_eos]
+    [_pad] + list(_punctuation) + _phonemes + _special_phn
 )
 
 
@@ -67,7 +67,7 @@ class SpanishProcessor(BaseProcessor):
         return text_norm, wav_path, speaker_name
 
     def setup_eos_token(self):
-        return _eos
+        return None
 
     def get_one_sample(self, item):
         text, wav_path, speaker_name = item
@@ -94,8 +94,7 @@ class SpanishProcessor(BaseProcessor):
         sequence = []
         sequence += self._symbols_to_sequence(text)
 
-        # add eos tokens
-        sequence += [self.eos_id]
+        # we do not add eos token. it is added manually during mfa preprocessing
         return sequence
 
     def _symbols_to_sequence(self, symbols):
