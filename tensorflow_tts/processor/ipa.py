@@ -76,7 +76,7 @@ class IPAProcessor(BaseProcessor):
         return text_norm, wav_path, speaker_name
 
     def setup_eos_token(self):
-        return _eos
+        return None #EOS token is added manually by MZTTS-converter-processor
 
     def get_one_sample(self, item):
         text, wav_path, speaker_name = item
@@ -103,8 +103,6 @@ class IPAProcessor(BaseProcessor):
         sequence = []
         sequence += self._symbols_to_sequence(text)
 
-        # add eos tokens
-        sequence += [self.eos_id]
         return sequence
 
     def _symbols_to_sequence(self, symbols):
