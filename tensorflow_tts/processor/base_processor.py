@@ -187,7 +187,7 @@ class BaseProcessor(abc.ABC):
             if loaded_path is None
             else loaded_path
         )
-        with open(loaded_path, "r") as f:
+        with open(loaded_path, "r",encoding="utf-8") as f:
             data = json.load(f)
         self.speakers_map = data["speakers_map"]
         self.symbol_to_id = data["symbol_to_id"]
@@ -209,7 +209,7 @@ class BaseProcessor(abc.ABC):
             if saved_path is None
             else saved_path
         )
-        with open(saved_path, "w") as f:
+        with open(saved_path, "w",encoding="utf-8") as f:
             full_mapper = {
                 "symbol_to_id": self.symbol_to_id,
                 "id_to_symbol": self.id_to_symbol,

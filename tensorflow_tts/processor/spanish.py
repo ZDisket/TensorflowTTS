@@ -26,18 +26,22 @@ from tensorflow_tts.utils import cleaners
 
 _pad = "pad"
 
-_phonemes = ["b", "a", "D", "i+", "x", "n", "d", "o", "rf", "m", "e", "r", "a+", "j", "t", "s", "k", "e+",
+_phsymbols = ["b", "a", "D", "i+", "x", "n", "d", "o", "rf", "m", "e", "r", "a+", "j", "t", "s", "k", "e+",
             "T", "i", "l", "ng", "p", "u", "n~", "o+", "w", "V", "f", "G", "g", "L", "tS", "aU", "u+", "eI",
-            "aI", "oI", "z", "eU"]
+            "aI", "oI", "z", "eU","SIL", "END"]
+            
+_letters = "DurantescoviódíqlmbpáCxyfgzhjLúéEABñQPNMTYSJVHGRFIÉOÁüKUZÚwÓÍkWÅè"
 _punctuation = ",.-;¡!¿?': "
-_special_phn = ["SIL", "END"]
 
+# Prepend "@" to phonetic symbols to ensure uniqueness (some are the same as uppercase letters):
+_phonemes = ["@" + s for s in _phsymbols]
 # Export all symbols:
 SPANISH_SYMBOLS = (
-    [_pad] + list(_punctuation) + _phonemes + _special_phn
+    [_pad] + list(_letters) + list(_punctuation) + _phonemes 
 )
 
 
+_curly_re = re.compile(r"(.*?)\{(.+?)\}(.*)")
 
 @dataclass
 class SpanishProcessor(BaseProcessor):
@@ -92,13 +96,30 @@ class SpanishProcessor(BaseProcessor):
 
     def text_to_sequence(self, text):
         sequence = []
-        sequence += self._symbols_to_sequence(text)
+        # Check for curly braces and treat their contents as ARPAbet:
+        while len(text):
+            m = _curly_re.match(text)
+            if not m:
+                sequence += self._symbols_to_sequence(
+                    self._clean_text(text, [self.cleaner_names])
+                )
+                break
+            sequence += self._symbols_to_sequence(
+                self._clean_text(m.group(1), [self.cleaner_names])
+            )
+            sequence += self._phonemes_to_sequence(m.group(2))
+            text = m.group(3)
 
-        # we do not add eos token. it is added manually during mfa preprocessing
         return sequence
 
     def _symbols_to_sequence(self, symbols):
         return [self.symbol_to_id[s] for s in symbols if self._should_keep_symbol(s)]
 
+    def _phonemes_to_sequence(self, text):
+        return self._symbols_to_sequence(["@" + s for s in text.split()])
+
     def _should_keep_symbol(self, s):
         return s in self.symbol_to_id and s != "_" and s != "~"
+
+    def _clean_text(self, text, cleaner_names):
+        return text # No text cleaning goes on here (for now?)
