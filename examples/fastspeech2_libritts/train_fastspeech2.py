@@ -32,7 +32,7 @@ import numpy as np
 import yaml
 
 import tensorflow_tts
-from examples.fastspeech2_multispeaker.fastspeech2_dataset import \
+from examples.fastspeech2_libritts.fastspeech2_dataset import \
     CharactorDurationF0EnergyMelDataset
 from tensorflow_tts.configs import FastSpeech2Config
 from tensorflow_tts.models import TFFastSpeech2
@@ -260,13 +260,20 @@ def main():
     )
     parser.add_argument(
         "--dataset_config",
-        default="preprocess/preprocess_multispeaker.yaml",
+        default="preprocess/libritts_preprocess.yaml",
         type=str,
     )
     parser.add_argument(
         "--dataset_stats",
         default="dump/stats.npy",
         type=str,
+    )
+    parser.add_argument(
+        "--pretrained",
+        default="",
+        type=str,
+        nargs="?",
+        help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
     )
     args = parser.parse_args()
 
@@ -387,6 +394,11 @@ def main():
         )
         fastspeech._build()
         fastspeech.summary()
+        
+        if len(args.pretrained) > 1:
+            fastspeech.load_weights(args.pretrained, by_name=True, skip_mismatch=True)
+            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
+
 
         # AdamW for fastspeech
         learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(

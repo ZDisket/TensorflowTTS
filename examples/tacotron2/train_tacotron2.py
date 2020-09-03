@@ -309,7 +309,7 @@ def main():
         default="",
         type=str,
         nargs="?",
-        help='Pretrained checkpoint file to load',
+        help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
     )
     args = parser.parse_args()
 
@@ -432,9 +432,10 @@ def main():
         tacotron2 = TFTacotron2(config=tacotron_config, training=True, name="tacotron2")
         tacotron2._build()
         tacotron2.summary()
-        if len(args.pretrained) > 2:
-            print("Loading pretrained parameters...")
-            tacotron2.load_weights(args.pretrained,by_name=True,skip_mismatch=True)
+        
+        if len(args.pretrained) > 1:
+            tacotron2.load_weights(args.pretrained, by_name=True, skip_mismatch=True)
+            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
 
         # AdamW for tacotron2
         learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(
