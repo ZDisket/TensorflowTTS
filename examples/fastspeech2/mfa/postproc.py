@@ -81,7 +81,7 @@ def main():
 
 
           durlog.write(str(mellen) + "|" + str(durlen) + "\n")
-          np.save(durload,duraz)
+          np.save(durload,duraz.astype("int32"))
         durlog.close()
     
     for trueid in afterdel:
