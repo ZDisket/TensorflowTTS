@@ -58,12 +58,24 @@ class TFFastSpeechVariantPredictor(tf.keras.layers.Layer):
                 units=config.encoder_self_attention_params.hidden_size,
                 name="speaker_fc",
             )
+            
+        if config.n_emotions > 1:
+            self.decoder_emotion_embeddings = tf.keras.layers.Embedding(
+                config.n_emotions,
+                config.encoder_self_attention_params.hidden_size,
+                embeddings_initializer=get_initializer(config.initializer_range),
+                name="emotion_embeddings",
+            )
+            self.emotion_fc = tf.keras.layers.Dense(
+                units=config.encoder_self_attention_params.hidden_size,
+                name="emotion_fc",
+            )
 
         self.config = config
 
     def call(self, inputs, training=False):
         """Call logic."""
-        encoder_hidden_states, speaker_ids, attention_mask = inputs
+        encoder_hidden_states, speaker_ids, attention_mask, emotion_ids = inputs
         attention_mask = tf.cast(tf.expand_dims(attention_mask, 2), encoder_hidden_states.dtype)
 
         if self.config.n_speakers > 1:
@@ -72,6 +84,13 @@ class TFFastSpeechVariantPredictor(tf.keras.layers.Layer):
             # extended speaker embeddings
             extended_speaker_features = speaker_features[:, tf.newaxis, :]
             encoder_hidden_states += extended_speaker_features
+            
+        if self.config.n_emotions > 1:
+            emotion_embeddings = self.decoder_emotion_embeddings(emotion_ids)
+            emotion_features = tf.math.softplus(self.emotion_fc(emotion_embeddings))
+            # extended emotion embeddings
+            extended_emotion_features = emotion_features[:, tf.newaxis, :]
+            encoder_hidden_states += extended_emotion_features
 
         # mask encoder hidden states
         masked_encoder_hidden_states = encoder_hidden_states * attention_mask
@@ -127,12 +146,15 @@ class TFFastSpeech2(TFFastSpeech):
         energy_gts = tf.convert_to_tensor(
             [[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]], tf.float32
         )
+        emotion_ids = tf.convert_to_tensor([0], tf.int32)
+
         self(
             input_ids=input_ids,
             speaker_ids=speaker_ids,
             duration_gts=duration_gts,
             f0_gts=f0_gts,
             energy_gts=energy_gts,
+            emotion_ids=emotion_ids,
         )
 
     def call(
@@ -142,12 +164,13 @@ class TFFastSpeech2(TFFastSpeech):
         duration_gts,
         f0_gts,
         energy_gts,
+        emotion_ids,
         training=False,
         **kwargs,
     ):
         """Call logic."""
         attention_mask = tf.math.not_equal(input_ids, 0)
-        embedding_output = self.embeddings([input_ids, speaker_ids], training=training)
+        embedding_output = self.embeddings([input_ids, speaker_ids,emotion_ids], training=training)
         encoder_output = self.encoder(
             [embedding_output, attention_mask], training=training
         )
@@ -212,11 +235,11 @@ class TFFastSpeech2(TFFastSpeech):
         return outputs
 
     def _inference(
-        self, input_ids, speaker_ids, speed_ratios, f0_ratios, energy_ratios, **kwargs,
+        self, input_ids, speaker_ids, speed_ratios, f0_ratios, energy_ratios,emotion_ids, **kwargs,
     ):
         """Call logic."""
         attention_mask = tf.math.not_equal(input_ids, 0)
-        embedding_output = self.embeddings([input_ids, speaker_ids], training=False)
+        embedding_output = self.embeddings([input_ids, speaker_ids,emotion_ids], training=False)
         encoder_output = self.encoder(
             [embedding_output, attention_mask], training=False
         )
@@ -292,6 +315,7 @@ class TFFastSpeech2(TFFastSpeech):
                 tf.TensorSpec(shape=[None,], dtype=tf.float32, name="speed_ratios"),
                 tf.TensorSpec(shape=[None,], dtype=tf.float32, name="f0_ratios"),
                 tf.TensorSpec(shape=[None,], dtype=tf.float32, name="energy_ratios"),
+                tf.TensorSpec(shape=[None,], dtype=tf.int32, name="emotion_ids"),
             ],
         )
 
@@ -304,5 +328,6 @@ class TFFastSpeech2(TFFastSpeech):
                 tf.TensorSpec(shape=[1,], dtype=tf.float32, name="speed_ratios"),
                 tf.TensorSpec(shape=[1,], dtype=tf.float32, name="f0_ratios"),
                 tf.TensorSpec(shape=[1,], dtype=tf.float32, name="energy_ratios"),
+                tf.TensorSpec(shape=[1,], dtype=tf.int32, name="emotion_ids"),
             ],
         )

@@ -153,21 +153,19 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
             mel_gts = mel_gts.numpy()
 
         # check directory
-        utt_ids = batch["utt_ids"].numpy()
         dirname = os.path.join(self.config["outdir"], f"predictions/{self.steps}steps")
         if not os.path.exists(dirname):
             os.makedirs(dirname)
 
         for idx, (mel_gt, mel_before, mel_after) in enumerate(
-            zip(mel_gts, mels_before, mels_after), 0
+            zip(mel_gts, mels_before, mels_after), 1
         ):
             mel_gt = tf.reshape(mel_gt, (-1, 80)).numpy()  # [length, 80]
             mel_before = tf.reshape(mel_before, (-1, 80)).numpy()  # [length, 80]
             mel_after = tf.reshape(mel_after, (-1, 80)).numpy()  # [length, 80]
 
             # plit figure and save it
-            utt_id = utt_ids[idx]
-            figname = os.path.join(dirname, f"{utt_id}.png")
+            figname = os.path.join(dirname, f"{idx}.png")
             fig = plt.figure(figsize=(10, 8))
             ax1 = fig.add_subplot(311)
             ax2 = fig.add_subplot(312)
@@ -253,7 +251,12 @@ def main():
         help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
     )
     
-
+    parser.add_argument(
+        "--nspeakers",
+        type=int,
+        default=1,
+        help="number of speakers",
+    )
     args = parser.parse_args()
 
     # return strategy
@@ -302,6 +305,9 @@ def main():
         config = yaml.load(f, Loader=yaml.Loader)
     config.update(vars(args))
     config["version"] = tensorflow_tts.__version__
+    if args.nspeakers > 1:
+        config["fastspeech2_params"]["n_speakers"] = args.nspeakers
+        
     with open(os.path.join(args.outdir, "config.yml"), "w") as f:
         yaml.dump(config, f, Dumper=yaml.Dumper)
     for key, value in config.items():
@@ -312,7 +318,9 @@ def main():
         mel_length_threshold = config["mel_length_threshold"]
     else:
         mel_length_threshold = None
+    
 
+        
     if config["format"] == "npy":
         charactor_query = "*-ids.npy"
         mel_query = "*-raw-feats.npy" if args.use_norm is False else "*-norm-feats.npy"
@@ -360,9 +368,6 @@ def main():
     fastspeech._build()
     fastspeech.summary()
 
-    if len(args.pretrained) > 1:
-      print("Loading pretrained parameters...")
-      fastspeech.load_weights(args.pretrained)
 
 
 
