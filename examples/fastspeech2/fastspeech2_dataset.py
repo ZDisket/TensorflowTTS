@@ -94,7 +94,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         f0_files = sorted(find_files(root_dir, f0_query))
         energy_files = sorted(find_files(root_dir, energy_query))
         speakerid_files = sorted(find_files(root_dir, speakerid_query))
-        emotionid_files = sorted(find_files(root_dir, emotionid_files))
+        emotionid_files = sorted(find_files(root_dir, emotionid_query))
 
 
         # assert the number of files

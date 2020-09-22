@@ -823,7 +823,7 @@ class TFFastSpeech(tf.keras.Model):
         masked_decoder_pos = tf.expand_dims(decoder_pos, 0) * encoder_masks
 
         decoder_output = self.decoder(
-            [length_regulator_outputs, speaker_ids, encoder_masks, masked_decoder_pos],
+            [length_regulator_outputs, speaker_ids, encoder_masks, masked_decoder_pos, emotion_ids],
             training=training,
         )
         last_decoder_hidden_states = decoder_output[0]
@@ -873,7 +873,7 @@ class TFFastSpeech(tf.keras.Model):
         masked_decoder_pos = tf.expand_dims(decoder_pos, 0) * encoder_masks
 
         decoder_output = self.decoder(
-            [length_regulator_outputs, speaker_ids, encoder_masks, masked_decoder_pos],
+            [length_regulator_outputs, speaker_ids, encoder_masks, masked_decoder_pos, emotion_ids],
             training=False,
         )
         last_decoder_hidden_states = decoder_output[0]

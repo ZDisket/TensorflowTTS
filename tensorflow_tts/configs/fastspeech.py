@@ -40,6 +40,7 @@ SelfAttentionParams = collections.namedtuple(
         "attention_probs_dropout_prob",
         "layer_norm_eps",
         "max_position_embeddings",
+        "n_emotions",
     ],
 )
 
@@ -52,6 +53,7 @@ class FastSpeechConfig(object):
         dataset='ljspeech',
         vocab_size=len(lj_symbols),
         n_speakers=1,
+        n_emotions=1,
         encoder_hidden_size=384,
         encoder_num_hidden_layers=4,
         encoder_num_attention_heads=2,
@@ -101,9 +103,11 @@ class FastSpeechConfig(object):
         self.n_speakers = n_speakers
         self.layer_norm_eps = layer_norm_eps
 
+
         # encoder params
         self.encoder_self_attention_params = SelfAttentionParams(
             n_speakers=n_speakers,
+            n_emotions=n_emotions,
             hidden_size=encoder_hidden_size,
             num_hidden_layers=encoder_num_hidden_layers,
             num_attention_heads=encoder_num_attention_heads,
@@ -123,6 +127,7 @@ class FastSpeechConfig(object):
         # decoder params
         self.decoder_self_attention_params = SelfAttentionParams(
             n_speakers=n_speakers,
+            n_emotions=n_emotions,
             hidden_size=decoder_hidden_size,
             num_hidden_layers=decoder_num_hidden_layers,
             num_attention_heads=decoder_num_attention_heads,
@@ -144,6 +149,7 @@ class FastSpeechConfig(object):
         self.duration_predictor_filters = duration_predictor_filters
         self.duration_predictor_kernel_sizes = duration_predictor_kernel_sizes
         self.num_mels = num_mels
+        self.n_emotions = n_emotions
 
         # postnet
         self.n_conv_postnet = n_conv_postnet
