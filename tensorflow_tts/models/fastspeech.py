@@ -520,7 +520,7 @@ class TFFastSpeechDecoder(TFFastSpeechEncoder):
             hidden_states += extended_speaker_features
 
         if self.config.n_emotions > 1:
-            emotion_embeddings = self.decoder_emotion_embeddings(speaker_ids)
+            emotion_embeddings = self.decoder_emotion_embeddings(emotion_ids)
             emotion_features = tf.math.softplus(self.emotion_fc(emotion_embeddings))
             # extended em embeddings
             extended_emotion_features = emotion_features[:, tf.newaxis, :]
