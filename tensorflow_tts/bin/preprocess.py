@@ -255,15 +255,11 @@ def gen_audio_features(item, config):
         fmax=fmax,
     )
     mel = np.log10(np.maximum(np.dot(mel_basis, S), 1e-10)).T  # (#frames, #bins)
-    mel_eos = np.zeros(shape=[1, np.shape(mel)[1]])  # (1, #bins)  # represent mel for eos_token.
-    mel = np.concatenate([mel, mel_eos], axis=0)  # (#frames + 1, #bins)
 
     # check audio and feature length
-    audio_eos = np.zeros(shape=[hop_size])  # (hop_size)  # represent audio for eos_token.
-    audio = np.concatenate([audio, audio_eos], axis=-1)
     audio = np.pad(audio, (0, config["fft_size"]), mode="edge")
     audio = audio[: len(mel) * hop_size]
-    assert len(mel) * hop_size == len(audio), f"{len(mel) * hope_size}, {len(audio)}"
+    assert len(mel) * hop_size == len(audio)
 
     # extract raw pitch
     _f0, t = pw.dio(
@@ -280,8 +276,11 @@ def gen_audio_features(item, config):
 
     # extract energy
     energy = np.sqrt(np.sum(S ** 2, axis=0))
-    energy = np.concatenate([energy, [0]], axis=-1)  # # represent energy for eos_token.
-    assert len(mel) == len(f0) == len(energy), f"{len(mel)}, {len(f0)}, {len(energy)}"
+    assert len(mel) == len(f0) == len(energy)
+
+    # remove outlier f0/energy
+    f0 = remove_outlier(f0)
+    energy = remove_outlier(energy)
 
     # apply global gain
     if config["global_gain_scale"] > 0.0:
@@ -292,8 +291,8 @@ def gen_audio_features(item, config):
         )
     item["audio"] = audio
     item["mel"] = mel
-    item["f0"] = remove_outlier(f0)
-    item["energy"] = remove_outlier(energy)
+    item["f0"] = f0
+    item["energy"] = energy
     return True, mel, energy, f0, item
 
 
@@ -490,10 +489,6 @@ def gen_normal_mel(mel_path, scaler, config):
     """
     mel = np.load(mel_path)
     mel_norm = scaler.transform(mel)
-
-    # replace mel_eos to all zero value.
-    mel_norm[-1, :] = 0.0
-
     path, file_name = os.path.split(mel_path)
     *_, subdir, suffix = path.split(os.sep)
 
