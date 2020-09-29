@@ -35,9 +35,13 @@ class CharactorMelDataset(AbstractDataset):
         root_dir,
         charactor_query="*-ids.npy",
         mel_query="*-norm-feats.npy",
+        speakerid_query="*-speakers.npy",
+        emotionid_query="*-emotions.npy",
         charactor_load_fn=np.load,
         mel_load_fn=np.load,
         mel_length_threshold=0,
+        speakerid_load_fn=np.load,
+        emotionid_load_fn=np.load,
         reduction_factor=1,
         mel_pad_value=0.0,
         char_pad_value=0,
@@ -67,13 +71,17 @@ class CharactorMelDataset(AbstractDataset):
         # find all of charactor and mel files.
         charactor_files = sorted(find_files(root_dir, charactor_query))
         mel_files = sorted(find_files(root_dir, mel_query))
+        speakerid_files = sorted(find_files(root_dir, speakerid_query))
+        emotionid_files = sorted(find_files(root_dir, emotionid_query))
+        
         mel_lengths = [mel_load_fn(f).shape[0] for f in mel_files]
         char_lengths = [charactor_load_fn(f).shape[0] for f in charactor_files]
+        
 
         # assert the number of files
         assert len(mel_files) != 0, f"Not found any mels files in ${root_dir}."
         assert (
-            len(mel_files) == len(charactor_files) == len(mel_lengths)
+            len(mel_files) == len(charactor_files) == len(mel_lengths) == len(emotiond_files) == len(speakerid_files)
         ), f"Number of charactor, mel and duration files are different \
                 ({len(mel_files)} vs {len(charactor_files)} vs {len(mel_lengths)})."
 
@@ -97,6 +105,8 @@ class CharactorMelDataset(AbstractDataset):
         self.g = g
         self.use_fixed_shapes = use_fixed_shapes
         self.max_char_length = np.max(char_lengths)
+        self.speakerid_files = speakerid_files
+        self.emotionid_files = emotionid_files
 
         if np.max(mel_lengths) % self.reduction_factor == 0:
             self.max_mel_length = np.max(mel_lengths)
@@ -114,11 +124,15 @@ class CharactorMelDataset(AbstractDataset):
         for i, utt_id in enumerate(utt_ids):
             mel_file = self.mel_files[i]
             charactor_file = self.charactor_files[i]
+            speakerid_file = self.speakerid_files[i]
+            emotionid_file = self.emotionid_files[i]
 
             items = {
                 "utt_ids": utt_id,
                 "mel_files": mel_file,
                 "charactor_files": charactor_file,
+                "speakerid_files": speakerid_file,
+                "emotionid_files": emotionid_file,
             }
 
             yield items
@@ -127,6 +141,9 @@ class CharactorMelDataset(AbstractDataset):
     def _load_data(self, items):
         mel = tf.numpy_function(np.load, [items["mel_files"]], tf.float32)
         charactor = tf.numpy_function(np.load, [items["charactor_files"]], tf.int32)
+        speakerid = tf.numpy_function(np.load, [items["speakerid_files"]], tf.int32)
+        emotionid = tf.numpy_function(np.load, [items["emotionid_files"]], tf.int32)
+        
         mel_length = len(mel)
         char_length = len(charactor)
         # padding mel to make its length is multiple of reduction factor.
@@ -145,10 +162,12 @@ class CharactorMelDataset(AbstractDataset):
             "utt_ids": items["utt_ids"],
             "input_ids": charactor,
             "input_lengths": char_length,
-            "speaker_ids": 0,
+            "speaker_ids": speakerid[0],
             "mel_gts": mel,
             "mel_lengths": mel_length,
             "real_mel_lengths": real_mel_length,
+            "emotion_ids": emotionid[0],
+
         }
 
         return items
@@ -214,6 +233,7 @@ class CharactorMelDataset(AbstractDataset):
             "mel_lengths": 0,
             "real_mel_lengths": 0,
             "g_attentions": self.ga_pad_value,
+            "emotion_ids": 0,
         }
 
         # define padded shapes.
@@ -224,6 +244,7 @@ class CharactorMelDataset(AbstractDataset):
             else [self.max_char_length],
             "input_lengths": [],
             "speaker_ids": [],
+            "emotion_ids": [],
             "mel_gts": [None, 80]
             if self.use_fixed_shapes is False
             else [self.max_mel_length, 80],
@@ -245,6 +266,8 @@ class CharactorMelDataset(AbstractDataset):
             "utt_ids": tf.string,
             "mel_files": tf.string,
             "charactor_files": tf.string,
+            "speakerid_files": tf.string,
+            "emotionid_files": tf.string,
         }
         return output_types
 

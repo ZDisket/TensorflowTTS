@@ -32,6 +32,7 @@ class Tacotron2Config(object):
         layer_norm_eps=1e-6,
         embedding_dropout_prob=0.1,
         n_speakers=5,
+        n_emotions=1,
         n_conv_encoder=3,
         encoder_conv_filters=512,
         encoder_conv_kernel_sizes=5,
@@ -91,6 +92,8 @@ class Tacotron2Config(object):
         self.attention_filters = attention_filters
         self.attention_kernel = attention_kernel
         self.n_mels = n_mels
+        
+        self.n_emotions = n_emotions
 
         # postnet
         self.n_conv_postnet = n_conv_postnet

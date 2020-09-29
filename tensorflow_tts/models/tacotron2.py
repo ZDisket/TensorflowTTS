@@ -132,7 +132,17 @@ class TFTacotronEmbeddings(tf.keras.layers.Layer):
             self.speaker_fc = tf.keras.layers.Dense(
                 units=config.embedding_hidden_size, name="speaker_fc"
             )
-
+        if config.n_emotions > 1:
+            self.emotion_embeddings = TFEmbedding(
+                config.n_emotions,
+                config.embedding_hidden_size,
+                embeddings_initializer=get_initializer(self.initializer_range),
+                name="emotion_embeddings",
+            )
+            self.emotion_fc = tf.keras.layers.Dense(
+                units=config.embedding_hidden_size, name="emotion_fc"
+            )
+            
         self.LayerNorm = tf.keras.layers.LayerNormalization(
             epsilon=config.layer_norm_eps, name="LayerNorm"
         )
@@ -153,6 +163,7 @@ class TFTacotronEmbeddings(tf.keras.layers.Layer):
         Args:
             1. character, Tensor (int32) shape [batch_size, length].
             2. speaker_id, Tensor (int32) shape [batch_size]
+            3. emotion_id, Tensor (int32) shape [batch_size]
         Returns:
             Tensor (float32) shape [batch_size, length, embedding_size].
         """
@@ -160,7 +171,7 @@ class TFTacotronEmbeddings(tf.keras.layers.Layer):
 
     def _embedding(self, inputs, training=False):
         """Applies embedding based on inputs tensor."""
-        input_ids, speaker_ids = inputs
+        input_ids, speaker_ids, emotion_ids = inputs
 
         # create embeddings
         inputs_embeds = tf.gather(self.character_embeddings, input_ids)
@@ -173,7 +184,15 @@ class TFTacotronEmbeddings(tf.keras.layers.Layer):
             extended_speaker_features = speaker_features[:, tf.newaxis, :]
             # sum all embedding
             embeddings += extended_speaker_features
-
+            
+        if self.config.n_emotions > 1:
+            emotion_embeddings = self.emotion_embeddings(emotion_ids)
+            emotion_features = tf.math.softplus(self.emotion_fc(emotion_embeddings))
+            # extended emotion embeddings
+            extended_emotion_features = emotion_features[:, tf.newaxis, :]
+            # sum all embedding
+            embeddings += extended_emotion_features
+            
         # apply layer-norm and dropout for embeddings.
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings, training=training)
@@ -232,15 +251,26 @@ class TFTacotronEncoder(tf.keras.layers.Layer):
                 units=config.encoder_lstm_units * 2, name="encoder_speaker_fc"
             )
 
+        if config.n_emotions > 1:
+            self.encoder_emotion_embeddings = TFEmbedding(
+                config.n_emotions,
+                config.embedding_hidden_size,
+                embeddings_initializer=get_initializer(config.initializer_range),
+                name="encoder_emotion_embeddings",
+            )
+            self.encoder_emotion_fc = tf.keras.layers.Dense(
+                units=config.encoder_lstm_units * 2, name="encoder_emotion_fc"
+            )
+
         self.config = config
 
     def call(self, inputs, training=False):
         """Call logic."""
-        input_ids, speaker_ids, input_mask = inputs
+        input_ids, speaker_ids, input_mask, emotion_ids = inputs
 
         # create embedding and mask them since we sum
         # speaker embedding to all character embedding.
-        input_embeddings = self.embeddings([input_ids, speaker_ids], training=training)
+        input_embeddings = self.embeddings([input_ids, speaker_ids,emotion_ids], training=training)
 
         # pass embeddings to convolution batch norm
         conv_outputs = self.convbn(input_embeddings, training=training)
@@ -259,6 +289,18 @@ class TFTacotronEncoder(tf.keras.layers.Layer):
             ]
             # sum to encoder outputs
             outputs += extended_encoder_speaker_features
+            
+        if self.config.n_emotions > 1:
+            encoder_emotion_embeddings = self.encoder_emotion_embeddings(emotion_ids)
+            encoder_emotion_features = tf.math.softplus(
+                self.encoder_emotion_fc(encoder_emotion_embeddings)
+            )
+            # extended encoderemotion embeddings
+            extended_encoder_emotion_features = encoder_emotion_features[
+                :, tf.newaxis, :
+            ]
+            # sum to encoder outputs
+            outputs += extended_encoder_emotion_features
 
         return outputs
 
@@ -785,11 +827,14 @@ class TFTacotron2(tf.keras.Model):
         input_lengths = np.array([9])
         speaker_ids = np.array([0])
         mel_outputs = np.random.normal(size=(1, 50, 80)).astype(np.float32)
+        emotion_ids = np.array([0])
+
         mel_lengths = np.array([50])
         self(
             input_ids,
             input_lengths,
             speaker_ids,
+            emotion_ids,
             mel_outputs,
             mel_lengths,
             10,
@@ -801,6 +846,7 @@ class TFTacotron2(tf.keras.Model):
         input_ids,
         input_lengths,
         speaker_ids,
+        emotion_ids,
         mel_gts,
         mel_lengths,
         maximum_iterations=2000,
@@ -820,7 +866,7 @@ class TFTacotron2(tf.keras.Model):
 
         # Encoder Step.
         encoder_hidden_states = self.encoder(
-            [input_ids, speaker_ids, input_mask], training=training
+            [input_ids, speaker_ids, input_mask, emotion_ids], training=training
         )
 
         batch_size = tf.shape(encoder_hidden_states)[0]
@@ -891,9 +937,11 @@ class TFTacotron2(tf.keras.Model):
             tf.TensorSpec([None, None], dtype=tf.int32, name="input_ids"),
             tf.TensorSpec([None,], dtype=tf.int32, name="input_lengths"),
             tf.TensorSpec([None,], dtype=tf.int32, name="speaker_ids"),
+            tf.TensorSpec([None,], dtype=tf.int32, name="emotion_ids"),
+
         ],
     )
-    def inference(self, input_ids, input_lengths, speaker_ids, **kwargs):
+    def inference(self, input_ids, input_lengths, speaker_ids,emotion_ids, **kwargs):
         """Call logic."""
         # create input-mask based on input_lengths
         input_mask = tf.sequence_mask(
@@ -904,7 +952,7 @@ class TFTacotron2(tf.keras.Model):
 
         # Encoder Step.
         encoder_hidden_states = self.encoder(
-            [input_ids, speaker_ids, input_mask], training=False
+            [input_ids, speaker_ids, input_mask,emotion_ids], training=False
         )
 
         batch_size = tf.shape(encoder_hidden_states)[0]
@@ -959,9 +1007,11 @@ class TFTacotron2(tf.keras.Model):
             tf.TensorSpec([1, None], dtype=tf.int32, name="input_ids"),
             tf.TensorSpec([1,], dtype=tf.int32, name="input_lengths"),
             tf.TensorSpec([1,], dtype=tf.int32, name="speaker_ids"),
+            tf.TensorSpec([1,], dtype=tf.int32, name="emotion_ids"),
+
         ],
     )
-    def inference_tflite(self, input_ids, input_lengths, speaker_ids, **kwargs):
+    def inference_tflite(self, input_ids, input_lengths, speaker_ids, emotion_ids, **kwargs):
         """Call logic."""
         # create input-mask based on input_lengths
         input_mask = tf.sequence_mask(
@@ -972,7 +1022,7 @@ class TFTacotron2(tf.keras.Model):
 
         # Encoder Step.
         encoder_hidden_states = self.encoder(
-            [input_ids, speaker_ids, input_mask], training=False
+            [input_ids, speaker_ids, input_mask, emotion_ids], training=False
         )
 
         batch_size = tf.shape(encoder_hidden_states)[0]
