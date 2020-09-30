@@ -81,7 +81,7 @@ class CharactorMelDataset(AbstractDataset):
         # assert the number of files
         assert len(mel_files) != 0, f"Not found any mels files in ${root_dir}."
         assert (
-            len(mel_files) == len(charactor_files) == len(mel_lengths) == len(emotiond_files) == len(speakerid_files)
+            len(mel_files) == len(charactor_files) == len(mel_lengths) == len(emotionid_files) == len(speakerid_files)
         ), f"Number of charactor, mel and duration files are different \
                 ({len(mel_files)} vs {len(charactor_files)} vs {len(mel_lengths)})."
 
