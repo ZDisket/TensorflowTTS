@@ -170,6 +170,8 @@ class Tacotron2Trainer(Seq2SeqBasedTrainer):
             axis=[1, 2],
         )
         loss_att /= tf.reduce_sum(attention_masks, axis=[1, 2])
+        
+        loss_att *= 0.2
 
         per_example_losses = (
             stop_token_loss + mel_loss_before + mel_loss_after + loss_att
