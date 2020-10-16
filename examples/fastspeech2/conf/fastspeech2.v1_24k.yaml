@@ -38,7 +38,7 @@ fastspeech2_params:
     num_mels: 80
     hidden_dropout_prob: 0.2
     attention_probs_dropout_prob: 0.1
-    max_position_embeddings: 2048
+    max_position_embeddings: 4096
     initializer_range: 0.02
     output_attentions: False
     output_hidden_states: False
@@ -46,7 +46,7 @@ fastspeech2_params:
 ###########################################################
 #                  DATA LOADER SETTING                    #
 ###########################################################
-batch_size: 16              # Batch size.
+batch_size: 32              # Batch size.
 remove_short_samples: true  # Whether to remove samples the length of which are less than batch_max_steps.
 allow_cache: true           # Whether to allow cache in dataset. If true, it requires cpu memory.
 mel_length_threshold: 32    # remove all targets has mel_length <= 32 
@@ -61,13 +61,15 @@ optimizer_params:
     warmup_proportion: 0.02
     weight_decay: 0.001
     
-    
+var_train_expr: null  # trainable variable expr (eg. 'embeddings|encoder|decoder' )
+                      # must separate by |. if var_train_expr is null then we 
+                      # training all variable
 ###########################################################
 #                    INTERVAL SETTING                     #
 ###########################################################
-train_max_steps: 200000               # Number of training steps.
+train_max_steps: 150000               # Number of training steps.
 save_interval_steps: 5000             # Interval steps to save checkpoint.
-eval_interval_steps: 500              # Interval steps to evaluate the network.
+eval_interval_steps: 2000              # Interval steps to evaluate the network.
 log_interval_steps: 200               # Interval steps to record the training log.
 ###########################################################
 #                     OTHER SETTING                       #
