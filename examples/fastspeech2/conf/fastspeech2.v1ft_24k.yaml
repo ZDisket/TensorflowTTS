@@ -46,7 +46,7 @@ fastspeech2_params:
 ###########################################################
 #                  DATA LOADER SETTING                    #
 ###########################################################
-batch_size: 16              # Batch size.
+batch_size: 32              # Batch size.
 remove_short_samples: true  # Whether to remove samples the length of which are less than batch_max_steps.
 allow_cache: true           # Whether to allow cache in dataset. If true, it requires cpu memory.
 mel_length_threshold: 32    # remove all targets has mel_length <= 32 
@@ -55,7 +55,7 @@ is_shuffle: true            # shuffle dataset after each epoch.
 #             OPTIMIZER & SCHEDULER SETTING               #
 ###########################################################
 optimizer_params:
-    initial_learning_rate: 0.002
+    initial_learning_rate: 0.001
     end_learning_rate: 0.0005
     decay_steps: 50000          # < train_max_steps is recommend.
     warmup_proportion: 0.02
