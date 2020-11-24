@@ -29,7 +29,7 @@ multiband_melgan_generator_params:
 ###########################################################
 #       DISCRIMINATOR NETWORK ARCHITECTURE SETTING        #
 ###########################################################
-discriminator_params:
+multiband_melgan_discriminator_params:
     out_channels: 1                   # Number of output channels.
     scales: 3                         # Number of multi-scales.
     downsample_pooling: "AveragePooling1D"   # Pooling type for the input downsampling.
@@ -67,7 +67,7 @@ lambda_adv: 2.5              # Loss balancing coefficient for adversarial loss.
 ###########################################################
 #                  DATA LOADER SETTING                    #
 ###########################################################
-batch_size: 64                 # Batch size.
+batch_size: 64                 # Batch size for each GPU with assuming that gradient_accumulation_steps == 1.
 batch_max_steps: 9600          # Length of each audio in batch for training. Make sure dividable by hop_size.
 batch_max_steps_valid: 48000   # Length of each audio for validation. Make sure dividable by hope_size.
 remove_short_samples: true     # Whether to remove samples the length of which are less than batch_max_steps.
@@ -79,18 +79,19 @@ is_shuffle: true               # shuffle dataset after each epoch.
 ###########################################################
 generator_optimizer_params:
     lr_fn: "PiecewiseConstantDecay"
-    lr_params: 
+    lr_params:
         boundaries: [100000, 200000, 300000, 400000, 500000, 600000, 700000]
         values: [0.001, 0.0005, 0.00025, 0.000125, 0.0000625, 0.00003125, 0.000015625, 0.000001]
     amsgrad: false
 
 discriminator_optimizer_params:
     lr_fn: "PiecewiseConstantDecay"
-    lr_params: 
+    lr_params:
         boundaries: [100000, 200000, 300000, 400000, 500000]
         values: [0.00025, 0.000125, 0.0000625, 0.00003125, 0.000015625, 0.000001]
     amsgrad: false
 
+gradient_accumulation_steps: 1
 ###########################################################
 #                    INTERVAL SETTING                     #
 ###########################################################

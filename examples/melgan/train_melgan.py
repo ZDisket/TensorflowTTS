@@ -37,11 +37,9 @@ import tensorflow_tts
 import tensorflow_tts.configs.melgan as MELGAN_CONFIG
 from examples.melgan.audio_mel_dataset import AudioMelDataset
 from tensorflow_tts.losses import TFMelSpectrogram
-from tensorflow_tts.models import (TFMelGANGenerator,
-                                   TFMelGANMultiScaleDiscriminator)
+from tensorflow_tts.models import TFMelGANGenerator, TFMelGANMultiScaleDiscriminator
 from tensorflow_tts.trainers import GanBasedTrainer
-from tensorflow_tts.utils import (calculate_2d_loss, calculate_3d_loss,
-                                  return_strategy)
+from tensorflow_tts.utils import calculate_2d_loss, calculate_3d_loss, return_strategy
 
 
 class MelganTrainer(GanBasedTrainer):
@@ -189,18 +187,20 @@ class MelganTrainer(GanBasedTrainer):
         # generate
         y_batch_ = self.one_step_predict(batch)
         y_batch = batch["audios"]
+        utt_ids = batch["utt_ids"]
 
         # convert to tensor.
         # here we just take a sample at first replica.
         try:
             y_batch_ = y_batch_.values[0].numpy()
             y_batch = y_batch.values[0].numpy()
+            utt_ids = utt_ids.values[0].numpy()
         except Exception:
             y_batch_ = y_batch_.numpy()
             y_batch = y_batch.numpy()
+            utt_ids = utt_ids.numpy()
 
         # check directory
-        utt_ids = batch["utt_ids"].numpy()
         dirname = os.path.join(self.config["outdir"], f"predictions/{self.steps}steps")
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -341,7 +341,7 @@ def main():
         default="",
         type=str,
         nargs="?",
-        help='path of .h5 melgan generator to load weights from',
+        help="path of .h5 melgan generator to load weights from",
     )
     args = parser.parse_args()
 
@@ -430,7 +430,9 @@ def main():
             hop_size=tf.constant(config["hop_size"], dtype=tf.int32),
         ),
         allow_cache=config["allow_cache"],
-        batch_size=config["batch_size"] * STRATEGY.num_replicas_in_sync,
+        batch_size=config["batch_size"]
+        * STRATEGY.num_replicas_in_sync
+        * config["gradient_accumulation_steps"],
     )
 
     valid_dataset = AudioMelDataset(
@@ -471,7 +473,9 @@ def main():
         )
 
         discriminator = TFMelGANMultiScaleDiscriminator(
-            MELGAN_CONFIG.MelGANDiscriminatorConfig(**config["melgan_discriminator_params"]),
+            MELGAN_CONFIG.MelGANDiscriminatorConfig(
+                **config["melgan_discriminator_params"]
+            ),
             name="melgan_discriminator",
         )
 
@@ -479,12 +483,12 @@ def main():
         fake_mels = tf.random.uniform(shape=[1, 100, 80], dtype=tf.float32)
         y_hat = generator(fake_mels)
         discriminator(y_hat)
-        
+
         if len(args.pretrained) > 1:
             generator.load_weights(args.pretrained)
-            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
-
-
+            logging.info(
+                f"Successfully loaded pretrained weight from {args.pretrained}."
+            )
 
         generator.summary()
         discriminator.summary()

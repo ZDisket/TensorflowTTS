@@ -37,8 +37,7 @@ from tensorflow_tts.configs.tacotron2 import Tacotron2Config
 from tensorflow_tts.models import TFTacotron2
 from tensorflow_tts.optimizers import AdamWeightDecay, WarmUp
 from tensorflow_tts.trainers import Seq2SeqBasedTrainer
-from tensorflow_tts.utils import (calculate_2d_loss, calculate_3d_loss,
-                                  return_strategy)
+from tensorflow_tts.utils import calculate_2d_loss, calculate_3d_loss, return_strategy
 
 
 class Tacotron2Trainer(Seq2SeqBasedTrainer):
@@ -197,6 +196,7 @@ class Tacotron2Trainer(Seq2SeqBasedTrainer):
             alignment_historys,
         ) = outputs
         mel_gts = batch["mel_gts"]
+        utt_ids = batch["utt_ids"]
 
         # convert to tensor.
         # here we just take a sample at first replica.
@@ -205,14 +205,15 @@ class Tacotron2Trainer(Seq2SeqBasedTrainer):
             mels_after = mel_outputs.values[0].numpy()
             mel_gts = mel_gts.values[0].numpy()
             alignment_historys = alignment_historys.values[0].numpy()
+            utt_ids = utt_ids.values[0].numpy()
         except Exception:
             mels_before = decoder_output.numpy()
             mels_after = mel_outputs.numpy()
             mel_gts = mel_gts.numpy()
             alignment_historys = alignment_historys.numpy()
+            utt_ids = utt_ids.numpy()
 
         # check directory
-        utt_ids = batch["utt_ids"].numpy()
         dirname = os.path.join(self.config["outdir"], f"predictions/{self.steps}steps")
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -311,7 +312,7 @@ def main():
         default="",
         type=str,
         nargs="?",
-        help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
+        help="pretrained weights .h5 file to load weights from. Auto-skips non-matching layers",
     )
     args = parser.parse_args()
 
@@ -400,7 +401,9 @@ def main():
     train_dataset = train_dataset.create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
-        batch_size=config["batch_size"] * STRATEGY.num_replicas_in_sync,
+        batch_size=config["batch_size"]
+        * STRATEGY.num_replicas_in_sync
+        * config["gradient_accumulation_steps"],
     )
 
     valid_dataset = CharactorMelDataset(
@@ -434,10 +437,12 @@ def main():
         tacotron2 = TFTacotron2(config=tacotron_config, training=True, name="tacotron2")
         tacotron2._build()
         tacotron2.summary()
-        
+
         if len(args.pretrained) > 1:
             tacotron2.load_weights(args.pretrained, by_name=True, skip_mismatch=True)
-            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
+            logging.info(
+                f"Successfully loaded pretrained weight from {args.pretrained}."
+            )
 
         # AdamW for tacotron2
         learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(

@@ -30,24 +30,36 @@ import os
 
 import numpy as np
 import yaml
+import json
 
 import tensorflow_tts
-from examples.fastspeech2_libritts.fastspeech2_dataset import \
-    CharactorDurationF0EnergyMelDataset
+from examples.fastspeech2_libritts.fastspeech2_dataset import (
+    CharactorDurationF0EnergyMelDataset,
+)
 from tensorflow_tts.configs import FastSpeech2Config
 from tensorflow_tts.models import TFFastSpeech2
 from tensorflow_tts.optimizers import AdamWeightDecay, WarmUp
 from tensorflow_tts.trainers import Seq2SeqBasedTrainer
-from tensorflow_tts.utils import (calculate_2d_loss, calculate_3d_loss,
-                                  return_strategy, TFGriffinLim)
+from tensorflow_tts.utils import (
+    calculate_2d_loss,
+    calculate_3d_loss,
+    return_strategy,
+    TFGriffinLim,
+)
 
 
 class FastSpeech2Trainer(Seq2SeqBasedTrainer):
     """FastSpeech2 Trainer class based on FastSpeechTrainer."""
 
     def __init__(
-        self, config, strategy, steps=0, epochs=0, is_mixed_precision=False, stats_path: str = "",
-            dataset_config: str = ""
+        self,
+        config,
+        strategy,
+        steps=0,
+        epochs=0,
+        is_mixed_precision=False,
+        stats_path: str = "",
+        dataset_config: str = "",
     ):
         """Initialize trainer.
         Args:
@@ -77,7 +89,9 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
         self.use_griffin = config.get("use_griffin", False)
         self.griffin_lim_tf = None
         if self.use_griffin:
-            logging.info(f"Load griff stats from {stats_path} and config from {dataset_config}")
+            logging.info(
+                f"Load griff stats from {stats_path} and config from {dataset_config}"
+            )
             self.griff_conf = yaml.load(open(dataset_config), Loader=yaml.Loader)
             self.prepare_grim(stats_path, self.griff_conf)
 
@@ -142,6 +156,7 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
 
         mels_before, mels_after, *_ = outputs
         mel_gts = batch["mel_gts"]
+        utt_ids = batch["utt_ids"]
 
         # convert to tensor.
         # here we just take a sample at first replica.
@@ -149,14 +164,18 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
             mels_before = mels_before.values[0].numpy()
             mels_after = mels_after.values[0].numpy()
             mel_gts = mel_gts.values[0].numpy()
+            utt_ids = utt_ids.values[0].numpy()
         except Exception:
             mels_before = mels_before.numpy()
             mels_after = mels_after.numpy()
             mel_gts = mel_gts.numpy()
+            utt_ids = utt_ids.numpy()
 
         # check directory
         if self.use_griffin:
-            griff_dir_name = os.path.join(self.config["outdir"], f"predictions/{self.steps}_wav")
+            griff_dir_name = os.path.join(
+                self.config["outdir"], f"predictions/{self.steps}_wav"
+            )
             if not os.path.exists(griff_dir_name):
                 os.makedirs(griff_dir_name)
 
@@ -165,24 +184,35 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
             os.makedirs(dirname)
 
         for idx, (mel_gt, mel_before, mel_after) in enumerate(
-            zip(mel_gts, mels_before, mels_after), 1
+            zip(mel_gts, mels_before, mels_after), 0
         ):
 
             if self.use_griffin:
-                grif_before = self.griffin_lim_tf(tf.reshape(mel_before, [-1, 80])[tf.newaxis, :], n_iter=32)
-                grif_after = self.griffin_lim_tf(tf.reshape(mel_after, [-1, 80])[tf.newaxis, :], n_iter=32)
-                grif_gt = self.griffin_lim_tf(tf.reshape(mel_gt, [-1, 80])[tf.newaxis, :], n_iter=32)
-                self.griffin_lim_tf.save_wav(grif_before, griff_dir_name, f"{idx}_before")
-                self.griffin_lim_tf.save_wav(grif_after, griff_dir_name, f"{idx}_after")
-                self.griffin_lim_tf.save_wav(grif_gt, griff_dir_name, f"{idx}_gt")
+                utt_id = utt_ids[idx]
+                grif_before = self.griffin_lim_tf(
+                    tf.reshape(mel_before, [-1, 80])[tf.newaxis, :], n_iter=32
+                )
+                grif_after = self.griffin_lim_tf(
+                    tf.reshape(mel_after, [-1, 80])[tf.newaxis, :], n_iter=32
+                )
+                grif_gt = self.griffin_lim_tf(
+                    tf.reshape(mel_gt, [-1, 80])[tf.newaxis, :], n_iter=32
+                )
+                self.griffin_lim_tf.save_wav(
+                    grif_before, griff_dir_name, f"{utt_id}_before"
+                )
+                self.griffin_lim_tf.save_wav(
+                    grif_after, griff_dir_name, f"{utt_id}_after"
+                )
+                self.griffin_lim_tf.save_wav(grif_gt, griff_dir_name, f"{utt_id}_gt")
 
+            utt_id = utt_ids[idx]
             mel_gt = tf.reshape(mel_gt, (-1, 80)).numpy()  # [length, 80]
             mel_before = tf.reshape(mel_before, (-1, 80)).numpy()  # [length, 80]
             mel_after = tf.reshape(mel_after, (-1, 80)).numpy()  # [length, 80]
 
-
             # plit figure and save it
-            figname = os.path.join(dirname, f"{idx}.png")
+            figname = os.path.join(dirname, f"{utt_id}.png")
             fig = plt.figure(figsize=(10, 8))
             ax1 = fig.add_subplot(311)
             ax2 = fig.add_subplot(312)
@@ -222,10 +252,7 @@ def main():
         "--use-norm", default=1, type=int, help="usr norm-mels for train or raw."
     )
     parser.add_argument(
-        "--f0-stat",
-        default="./dump/stats_f0.npy",
-        type=str,
-        help="f0-stat path.",
+        "--f0-stat", default="./dump/stats_f0.npy", type=str, help="f0-stat path.",
     )
     parser.add_argument(
         "--energy-stat",
@@ -259,21 +286,20 @@ def main():
         help="using mixed precision for generator or not.",
     )
     parser.add_argument(
-        "--dataset_config",
-        default="preprocess/libritts_preprocess.yaml",
-        type=str,
+        "--dataset_config", default="preprocess/libritts_preprocess.yaml", type=str,
     )
     parser.add_argument(
-        "--dataset_stats",
-        default="dump/stats.npy",
-        type=str,
+        "--dataset_stats", default="dump/stats.npy", type=str,
+    )
+    parser.add_argument(
+        "--dataset_mapping", default="dump/libritts_mapper.npy", type=str,
     )
     parser.add_argument(
         "--pretrained",
         default="",
         type=str,
         nargs="?",
-        help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
+        help="pretrained weights .h5 file to load weights from. Auto-skips non-matching layers",
     )
     args = parser.parse_args()
 
@@ -343,6 +369,17 @@ def main():
     else:
         raise ValueError("Only npy are supported.")
 
+    # load speakers map from dataset map
+    with open(args.dataset_mapping) as f:
+        dataset_mapping = json.load(f)
+        speakers_map = dataset_mapping["speakers_map"]
+
+    # Check n_speakers matches number of speakers in speakers_map
+    n_speakers = config["fastspeech2_params"]["n_speakers"]
+    assert n_speakers == len(
+        speakers_map
+    ), f"Number of speakers in dataset does not match n_speakers in config"
+
     # define train/valid dataset
     train_dataset = CharactorDurationF0EnergyMelDataset(
         root_dir=args.train_dir,
@@ -354,10 +391,13 @@ def main():
         f0_stat=args.f0_stat,
         energy_stat=args.energy_stat,
         mel_length_threshold=mel_length_threshold,
+        speakers_map=speakers_map,
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
-        batch_size=config["batch_size"] * STRATEGY.num_replicas_in_sync,
+        batch_size=config["batch_size"]
+        * STRATEGY.num_replicas_in_sync
+        * config["gradient_accumulation_steps"],
     )
 
     valid_dataset = CharactorDurationF0EnergyMelDataset(
@@ -370,6 +410,7 @@ def main():
         f0_stat=args.f0_stat,
         energy_stat=args.energy_stat,
         mel_length_threshold=mel_length_threshold,
+        speakers_map=speakers_map,
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
@@ -384,7 +425,7 @@ def main():
         epochs=0,
         is_mixed_precision=args.mixed_precision,
         stats_path=args.dataset_stats,
-        dataset_config=args.dataset_config
+        dataset_config=args.dataset_config,
     )
 
     with STRATEGY.scope():
@@ -394,11 +435,12 @@ def main():
         )
         fastspeech._build()
         fastspeech.summary()
-        
+
         if len(args.pretrained) > 1:
             fastspeech.load_weights(args.pretrained, by_name=True, skip_mismatch=True)
-            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
-
+            logging.info(
+                f"Successfully loaded pretrained weight from {args.pretrained}."
+            )
 
         # AdamW for fastspeech
         learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(

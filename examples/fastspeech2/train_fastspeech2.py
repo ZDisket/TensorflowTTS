@@ -37,15 +37,13 @@ import yaml
 from tqdm import tqdm
 
 import tensorflow_tts
-from examples.fastspeech2.fastspeech2_dataset import \
-    CharactorDurationF0EnergyMelDataset
+from examples.fastspeech2.fastspeech2_dataset import CharactorDurationF0EnergyMelDataset
 from examples.fastspeech.train_fastspeech import FastSpeechTrainer
 from tensorflow_tts.configs import FastSpeech2Config
 from tensorflow_tts.models import TFFastSpeech2
 from tensorflow_tts.optimizers import AdamWeightDecay, WarmUp
 from tensorflow_tts.trainers import Seq2SeqBasedTrainer
-from tensorflow_tts.utils import (calculate_2d_loss, calculate_3d_loss,
-                                  return_strategy)
+from tensorflow_tts.utils import calculate_2d_loss, calculate_3d_loss, return_strategy
 
 
 class FastSpeech2Trainer(Seq2SeqBasedTrainer):
@@ -140,6 +138,7 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
 
         mels_before, mels_after, *_ = outputs
         mel_gts = batch["mel_gts"]
+        utt_ids = batch["utt_ids"]
 
         # convert to tensor.
         # here we just take a sample at first replica.
@@ -147,13 +146,14 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
             mels_before = mels_before.values[0].numpy()
             mels_after = mels_after.values[0].numpy()
             mel_gts = mel_gts.values[0].numpy()
+            utt_ids = utt_ids.values[0].numpy()
         except Exception:
             mels_before = mels_before.numpy()
             mels_after = mels_after.numpy()
             mel_gts = mel_gts.numpy()
+            utt_ids = utt_ids.numpy()
 
         # check directory
-        utt_ids = batch["utt_ids"].numpy()
         dirname = os.path.join(self.config["outdir"], f"predictions/{self.steps}steps")
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -250,9 +250,8 @@ def main():
         default="",
         type=str,
         nargs="?",
-        help='pretrained weights .h5 file to load weights from. Auto-skips non-matching layers',
+        help="pretrained weights .h5 file to load weights from. Auto-skips non-matching layers",
     )
-    
 
     args = parser.parse_args()
 
@@ -336,7 +335,9 @@ def main():
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
-        batch_size=config["batch_size"] * STRATEGY.num_replicas_in_sync,
+        batch_size=config["batch_size"]
+        * STRATEGY.num_replicas_in_sync
+        * config["gradient_accumulation_steps"],
     )
 
     valid_dataset = CharactorDurationF0EnergyMelDataset(
@@ -384,7 +385,9 @@ def main():
         fastspeech.summary()
         if len(args.pretrained) > 1:
             fastspeech.load_weights(args.pretrained, by_name=True, skip_mismatch=True)
-            logging.info(f"Successfully loaded pretrained weight from {args.pretrained}.")
+            logging.info(
+                f"Successfully loaded pretrained weight from {args.pretrained}."
+            )
 
         # AdamW for fastspeech
         learning_rate_fn = tf.keras.optimizers.schedules.PolynomialDecay(
