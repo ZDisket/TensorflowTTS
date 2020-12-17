@@ -136,10 +136,7 @@ class BasedTrainer(metaclass=abc.ABCMeta):
         # update
         self.epochs += 1
         self.train_steps_per_epoch = train_steps_per_epoch
-        logging.info(
-            f"(Steps: {self.steps}) Finished {self.epochs} epoch training "
-            f"({self.train_steps_per_epoch} steps per epoch)."
-        )
+
 
     @abc.abstractmethod
     def _eval_epoch(self):
@@ -517,7 +514,6 @@ class GanBasedTrainer(BasedTrainer):
 
         logging.info(
             f"(Steps: {self.steps}) Finished evaluation "
-            f"({eval_steps_per_epoch} steps per epoch)."
         )
 
         # average loss
@@ -886,7 +882,6 @@ class Seq2SeqBasedTrainer(BasedTrainer, metaclass=abc.ABCMeta):
 
         logging.info(
             f"(Steps: {self.steps}) Finished evaluation "
-            f"({eval_steps_per_epoch} steps per epoch)."
         )
 
         # average loss
