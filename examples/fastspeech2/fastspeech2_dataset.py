@@ -55,6 +55,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         duration_query="*-durations.npy",
         f0_query="*-raw-f0.npy",
         energy_query="*-raw-energy.npy",
+        speakerid_query="*-speakers.npy",
         f0_stat="./dump/stats_f0.npy",
         energy_stat="./dump/stats_energy.npy",
         charactor_load_fn=np.load,
@@ -62,6 +63,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         duration_load_fn=np.load,
         f0_load_fn=np.load,
         energy_load_fn=np.load,
+        speakerid_load_fn=np.load,
         mel_length_threshold=0,
     ):
         """Initialize dataset.
@@ -89,6 +91,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         duration_files = sorted(find_files(root_dir, duration_query))
         f0_files = sorted(find_files(root_dir, f0_query))
         energy_files = sorted(find_files(root_dir, energy_query))
+        speakerid_files = sorted(find_files(root_dir, speakerid_query))
 
         # assert the number of files
         assert len(mel_files) != 0, f"Not found any mels files in ${root_dir}."
@@ -98,7 +101,8 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
             == len(duration_files)
             == len(f0_files)
             == len(energy_files)
-        ), f"Number of charactor, mel, duration, f0 and energy files are different"
+            == len(speakerid_files)
+        ), f"Number of charactor, mel, duration, f0, speakerid and energy files are different"
 
         if ".npy" in charactor_query:
             suffix = charactor_query[1:]
@@ -111,12 +115,14 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         self.duration_files = duration_files
         self.f0_files = f0_files
         self.energy_files = energy_files
+        self.speakerid_files = speakerid_files
         self.mel_load_fn = mel_load_fn
         self.charactor_load_fn = charactor_load_fn
         self.duration_load_fn = duration_load_fn
         self.f0_load_fn = f0_load_fn
         self.energy_load_fn = energy_load_fn
         self.mel_length_threshold = mel_length_threshold
+        self.speakerid_load_fn = speakerid_load_fn
 
         self.f0_stat = np.load(f0_stat)
         self.energy_stat = np.load(energy_stat)
@@ -141,6 +147,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
             duration_file = self.duration_files[i]
             f0_file = self.f0_files[i]
             energy_file = self.energy_files[i]
+            speakerid_file = self.speakerid_files[i]
 
             items = {
                 "utt_ids": utt_id,
@@ -149,6 +156,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
                 "duration_files": duration_file,
                 "f0_files": f0_file,
                 "energy_files": energy_file,
+                "speakerid_files": speakerid_file,
             }
 
             yield items
@@ -160,6 +168,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         duration = tf.numpy_function(np.load, [items["duration_files"]], tf.int32)
         f0 = tf.numpy_function(np.load, [items["f0_files"]], tf.float32)
         energy = tf.numpy_function(np.load, [items["energy_files"]], tf.float32)
+        speakerid = tf.numpy_function(np.load, [items["speakerid_files"]], tf.int32)[0]
 
         f0 = self._norm_mean_std_tf(f0, self.f0_stat[0], self.f0_stat[1])
         energy = self._norm_mean_std_tf(
@@ -173,7 +182,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
         items = {
             "utt_ids": items["utt_ids"],
             "input_ids": charactor,
-            "speaker_ids": 0,
+            "speaker_ids": speakerid,
             "duration_gts": duration,
             "f0_gts": f0,
             "energy_gts": energy,
@@ -241,6 +250,7 @@ class CharactorDurationF0EnergyMelDataset(AbstractDataset):
             "duration_files": tf.string,
             "f0_files": tf.string,
             "energy_files": tf.string,
+            "speakerid_files": tf.string,
         }
         return output_types
 

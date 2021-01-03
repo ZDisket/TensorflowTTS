@@ -324,6 +324,8 @@ def main():
         f0_stat=args.f0_stat,
         energy_stat=args.energy_stat,
         mel_length_threshold=mel_length_threshold,
+        speakerid_query="*-speakers.npy",
+        speakerid_load_fn=np.load,
     ).create(
         is_shuffle=config["is_shuffle"],
         allow_cache=config["allow_cache"],
