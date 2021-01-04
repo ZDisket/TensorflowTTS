@@ -136,10 +136,7 @@ class BasedTrainer(metaclass=abc.ABCMeta):
         # update
         self.epochs += 1
         self.train_steps_per_epoch = train_steps_per_epoch
-        logging.info(
-            f"(Steps: {self.steps}) Finished {self.epochs} epoch training "
-            f"({self.train_steps_per_epoch} steps per epoch)."
-        )
+
 
     @abc.abstractmethod
     def _eval_epoch(self):
@@ -463,7 +460,7 @@ class GanBasedTrainer(BasedTrainer):
 
         # one step discriminator
         # recompute y_hat after 1 step generator for discriminator training.
-        if self.steps >= self.config["discriminator_train_start_steps"]:
+        if self._gen_optimizer.iterations >= self.config["discriminator_train_start_steps"]:
             if self.config["gradient_accumulation_steps"] == 1:
                 (
                     gradients,
@@ -517,7 +514,6 @@ class GanBasedTrainer(BasedTrainer):
 
         logging.info(
             f"(Steps: {self.steps}) Finished evaluation "
-            f"({eval_steps_per_epoch} steps per epoch)."
         )
 
         # average loss
@@ -635,15 +631,6 @@ class GanBasedTrainer(BasedTrainer):
         """Check training finished."""
         if self.steps >= self.config["train_max_steps"]:
             self.finish_train = True
-
-        if (
-            self.steps != 0
-            and self.steps == self.config["discriminator_train_start_steps"]
-        ):
-            self.finish_train = True
-            logging.info(
-                f"Finished training only generator at {self.steps}steps, pls resume and continue training."
-            )
 
     def _check_log_interval(self):
         """Log to tensorboard."""
@@ -895,7 +882,6 @@ class Seq2SeqBasedTrainer(BasedTrainer, metaclass=abc.ABCMeta):
 
         logging.info(
             f"(Steps: {self.steps}) Finished evaluation "
-            f"({eval_steps_per_epoch} steps per epoch)."
         )
 
         # average loss

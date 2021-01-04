@@ -27,6 +27,10 @@ sys.path.append(".")
 import argparse
 import logging
 import os
+import sys
+import gc
+
+sys.path.append(".")
 
 import numpy as np
 import yaml
@@ -73,6 +77,7 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
         self.init_train_eval_metrics(self.list_metrics_name)
         self.reset_states_train()
         self.reset_states_eval()
+        
 
     def compile(self, model, optimizer):
         super().compile(model, optimizer)
@@ -119,6 +124,9 @@ class FastSpeech2Trainer(Seq2SeqBasedTrainer):
             "mel_loss_after": mel_loss_after,
         }
 
+        # reset
+        self.reset_states_eval()
+        gc.collect()
         return per_example_losses, dict_metrics_losses
 
     def generate_and_save_intermediate_result(self, batch):
@@ -349,6 +357,17 @@ def main():
         allow_cache=config["allow_cache"],
         batch_size=config["batch_size"] * STRATEGY.num_replicas_in_sync,
     )
+
+
+    fastspeech = TFFastSpeech2(config=FastSpeech2Config(**config["fastspeech2_params"]))
+    fastspeech._build()
+    fastspeech.summary()
+
+    if len(args.pretrained) > 1:
+      print("Loading pretrained parameters...")
+      fastspeech.load_weights(args.pretrained)
+
+
 
     # define trainer
     trainer = FastSpeech2Trainer(
