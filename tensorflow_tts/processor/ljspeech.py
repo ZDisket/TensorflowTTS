@@ -22,6 +22,7 @@ import soundfile as sf
 from dataclasses import dataclass
 from tensorflow_tts.processor import BaseProcessor
 from tensorflow_tts.utils import cleaners
+from g2p_en import G2p
 
 valid_symbols = [
     "AA",
@@ -108,6 +109,8 @@ valid_symbols = [
     "Y",
     "Z",
     "ZH",
+    "SIL",#Silence
+    "END", #padding token
 ]
 
 _pad = "pad"
@@ -115,6 +118,7 @@ _eos = "eos"
 _punctuation = "!'(),.:;? "
 _special = "-"
 _letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+_singlesil = [",",";","?",".","..."]
 
 # Prepend "@" to ARPAbet symbols to ensure uniqueness (some are the same as uppercase letters):
 _arpabet = ["@" + s for s in valid_symbols]
@@ -126,6 +130,9 @@ LJSPEECH_SYMBOLS = (
 
 # Regular expression matching text enclosed in curly braces:
 _curly_re = re.compile(r"(.*?)\{(.+?)\}(.*)")
+
+_symbol_to_id = {s: i for i, s in enumerate(LJSPEECH_SYMBOLS)}
+_id_to_symbol = {i: s for i, s in enumerate(LJSPEECH_SYMBOLS)}
 
 
 @dataclass
@@ -154,9 +161,6 @@ class LJSpeechProcessor(BaseProcessor):
         wav_path = os.path.join(data_dir, "wavs", f"{wave_file}.wav")
         speaker_name = "ljspeech"
         return text_norm, wav_path, speaker_name
-
-    def setup_eos_token(self):
-        return _eos
 
     def get_one_sample(self, item):
         text, wav_path, speaker_name = item
@@ -196,7 +200,6 @@ class LJSpeechProcessor(BaseProcessor):
             text = m.group(3)
 
         # add eos tokens
-        sequence += [self.eos_id]
         return sequence
 
     def _clean_text(self, text, cleaner_names):
@@ -207,11 +210,43 @@ class LJSpeechProcessor(BaseProcessor):
             text = cleaner(text)
         return text
 
+    def processtxtph(self,intxt):
+      g2p = G2p()
+      ptext =  self._clean_text(intxt,[self.cleaner_names])
+      phs = _g2p2synth(g2p(ptext))
+
+      arpatxt = " ".join(phs)
+      ids = self._arpabet_to_sequence(arpatxt)
+      
+      return ids, arpatxt
+
+    def setup_eos_token(self):
+        return None # because we don't use this 
+
     def _symbols_to_sequence(self, symbols):
-        return [self.symbol_to_id[s] for s in symbols if self._should_keep_symbol(s)]
+        return [_symbol_to_id[s] for s in symbols if self._should_keep_symbol(s)]
 
     def _arpabet_to_sequence(self, text):
         return self._symbols_to_sequence(["@" + s for s in text.split()])
 
     def _should_keep_symbol(self, s):
-        return s in self.symbol_to_id and s != "_" and s != "~"
+        return s in _symbol_to_id and s != "_" and s != "~"
+
+def _g2p2synth(inseq):
+  phseq = list()
+  for idx, itm in enumerate(inseq):
+    if itm == ' ':
+      continue
+    
+    if idx < len(inseq) - 1: #Prevent it from appending SILs due to end periods
+      if itm in _singlesil:
+       phseq.append("SIL")
+       continue
+    else:
+      if itm in _singlesil:
+        continue # Skip ending dots
+
+    phseq.append(itm)
+    
+  phseq.append("SIL")
+  return phseq
